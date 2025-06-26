@@ -2,8 +2,8 @@
 const express = require('express');
 const bcrypt = require('bcrypt');
 const router = express.Router();
-const User = require('../models/User');
-const authenticateToken = require('../middleware/auth');
+const User = require('../models/User.model');
+const authenticateToken = require('../middleware/auth.middleware');
 
 // TEMP route to test user creation
 router.post('/create', async (req, res) => {

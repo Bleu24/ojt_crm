@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const DtrEntry = require('../models/DtrEntry');
-const authenticateToken = require('../middleware/auth');
+const DtrEntry = require('../models/DtrEntry.model');
+const authenticateToken = require('../middleware/auth.middleware');
 
 // Create new DTR entry
 router.post('/create', authenticateToken, async (req, res) => {
