@@ -8,6 +8,7 @@ const app = express();
 const userRoutes = require('./routes/users.routes');
 const authRoutes = require('./routes/auth.routes');
 const dtrRoutes = require('./routes/dtr.routes');
+const postRoutes = require('./routes/posts.routes');
 
 
 
@@ -16,6 +17,7 @@ app.use(express.json());
 app.use('/api/users', userRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/dtr', dtrRoutes);
+app.use('/api/posts', postRoutes);
 
 // Routes (sample placeholder)
 app.get('/', (req, res) => {
