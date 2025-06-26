@@ -1,37 +1,12 @@
-// routes/users.js
 const express = require('express');
-const bcrypt = require('bcrypt');
 const router = express.Router();
-const User = require('../models/User.model');
 const authenticateToken = require('../middleware/auth.middleware');
+const userController = require('../controllers/users.controller');
 
-// TEMP route to test user creation
-router.post('/create', async (req, res) => {
-  try {
-    const { name, email, role, password  } = req.body;
+// TEMP: Create user
+router.post('/create', userController.createUser);
 
-    // Hash the password
-    const saltRounds = 10;
-    const passwordHash = await bcrypt.hash(password, saltRounds);
-
-
-    const newUser = new User({ name, email, role, passwordHash });
-    await newUser.save();
-
-    res.status(201).json({ message: 'User created', user: newUser });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-
-router.get('/me', authenticateToken, async (req, res) => {
-  try {
-    const user = await User.findById(req.user.userId).select('-passwordHash');
-    res.json(user);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
+// Get current user profile
+router.get('/me', authenticateToken, userController.getCurrentUser);
 
 module.exports = router;
