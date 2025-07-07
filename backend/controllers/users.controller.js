@@ -26,4 +26,15 @@ exports.getCurrentUser = async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
+  
 };
+
+exports.getMyTeam = async (req, res) => {
+  try {
+    const team = await User.find({ supervisorId: req.user.userId }).select('-passwordHash');
+    res.json(team);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
