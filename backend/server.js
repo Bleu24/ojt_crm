@@ -17,6 +17,7 @@ const authRoutes = require('./routes/auth.routes');
 const dtrRoutes = require('./routes/dtr.routes');
 const postRoutes = require('./routes/posts.routes');
 const recruitRoutes = require('./routes/recruits.routes');
+const reportsRoutes = require('./routes/reports.routes');
 
 
 
@@ -27,6 +28,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/dtr', dtrRoutes);
 app.use('/api/posts', postRoutes);
 app.use('/api/recruits', recruitRoutes);
+app.use('/api/reports', reportsRoutes);
 
 // Routes (sample placeholder)
 app.get('/', (req, res) => {
