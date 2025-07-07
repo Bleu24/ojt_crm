@@ -13,7 +13,7 @@ const userSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ['intern', 'staff', 'unit_manager', 'branch_manager', 'admin'],
+    enum: ['intern', 'staff', 'unit_manager', 'admin'],
     default: 'intern',
   },
   supervisorId: {
