@@ -1,4 +1,3 @@
-
 const express = require('express');
 const router = express.Router();
 const authenticateToken = require('../middleware/auth.middleware');
@@ -15,5 +14,11 @@ router.get('/me', authenticateToken, userController.getCurrentUser);
 // Get current team 
 router.get('/team', authenticateToken, requireRole(['unit_manager', 'branch_manager', 'admin']), userController.getMyTeam);
 
+// Supervision management routes
+router.get('/', authenticateToken, requireRole(['unit_manager', 'admin']), userController.getAvailableUsers);
+router.get('/supervised', authenticateToken, requireRole(['unit_manager', 'admin']), userController.getSupervisedUsers);
+router.get('/team-status', authenticateToken, requireRole(['unit_manager', 'admin']), userController.getTeamStatus);
+router.patch('/:userId/assign-supervisor', authenticateToken, requireRole(['unit_manager', 'admin']), userController.assignSupervisor);
+router.patch('/:userId/remove-supervisor', authenticateToken, requireRole(['unit_manager', 'admin']), userController.removeSupervisor);
 
 module.exports = router;
