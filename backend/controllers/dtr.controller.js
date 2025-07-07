@@ -1,4 +1,5 @@
 const DtrEntry = require('../models/DtrEntry.model');
+const User = require('../models/User.model');
 const { DateTime } = require('luxon');
 
 // Create new DTR entry (Admin only)
@@ -88,6 +89,43 @@ exports.timeOut = async (req, res) => {
     await entry.save();
     res.json({ message: 'Time out logged.', entry });
   } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// Get accomplishments for a specific user and date (for supervisors)
+exports.getAccomplishments = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { date } = req.query;
+
+    // Check if user has permission to view accomplishments
+    if (req.user.role !== 'admin') {
+      // For unit managers, check if the user is under their supervision
+      if (req.user.role === 'unit_manager') {
+        const user = await User.findById(userId);
+        if (!user || !user.supervisorId || user.supervisorId.toString() !== req.user.userId) {
+          return res.status(403).json({ error: 'You can only view accomplishments of users under your supervision' });
+        }
+      } else {
+        return res.status(403).json({ error: 'Unauthorized' });
+      }
+    }
+
+    // Parse date
+    const targetDate = date ? new Date(date) : new Date();
+    const startOfDay = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate());
+    const endOfDay = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate() + 1);
+
+    // Get DTR entries for the specified date
+    const entries = await DtrEntry.find({
+      userId: userId,
+      date: { $gte: startOfDay, $lt: endOfDay }
+    }).sort({ timeIn: -1 });
+
+    res.json({ entries });
+  } catch (err) {
+    console.error('Error fetching accomplishments:', err);
     res.status(500).json({ error: err.message });
   }
 };
