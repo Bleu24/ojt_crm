@@ -10,7 +10,8 @@ export default function SignUp() {
     name: '',
     email: '',
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
+    role: 'staff'
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -50,7 +51,8 @@ export default function SignUp() {
         body: JSON.stringify({
           name: formData.name,
           email: formData.email,
-          password: formData.password
+          password: formData.password,
+          role: formData.role
         }),
       });
 
@@ -129,6 +131,69 @@ export default function SignUp() {
                   className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
                   placeholder="Enter your email"
                 />
+              </div>
+
+              <div>
+                <label htmlFor="role" className="block text-sm font-medium text-gray-300 mb-2">
+                  Role
+                </label>
+                <div className="space-y-2">
+                  <label className={`flex items-center p-3 rounded-lg border cursor-pointer transition-all ${
+                    formData.role === 'staff' 
+                      ? 'bg-orange-500/20 border-orange-500/50 text-orange-400' 
+                      : 'bg-white/5 border-white/20 text-gray-300 hover:bg-white/10'
+                  }`}>
+                    <input
+                      type="radio"
+                      name="role"
+                      value="staff"
+                      checked={formData.role === 'staff'}
+                      onChange={handleChange}
+                      className="sr-only"
+                    />
+                    <div className={`w-4 h-4 rounded-full border-2 mr-3 flex items-center justify-center ${
+                      formData.role === 'staff' 
+                        ? 'border-orange-400 bg-orange-400' 
+                        : 'border-gray-400'
+                    }`}>
+                      {formData.role === 'staff' && (
+                        <div className="w-2 h-2 rounded-full bg-white"></div>
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <div className="font-medium">Staff</div>
+                      <div className="text-xs opacity-75">Full-time employee</div>
+                    </div>
+                  </label>
+                  
+                  <label className={`flex items-center p-3 rounded-lg border cursor-pointer transition-all ${
+                    formData.role === 'intern' 
+                      ? 'bg-yellow-500/20 border-yellow-500/50 text-yellow-400' 
+                      : 'bg-white/5 border-white/20 text-gray-300 hover:bg-white/10'
+                  }`}>
+                    <input
+                      type="radio"
+                      name="role"
+                      value="intern"
+                      checked={formData.role === 'intern'}
+                      onChange={handleChange}
+                      className="sr-only"
+                    />
+                    <div className={`w-4 h-4 rounded-full border-2 mr-3 flex items-center justify-center ${
+                      formData.role === 'intern' 
+                        ? 'border-yellow-400 bg-yellow-400' 
+                        : 'border-gray-400'
+                    }`}>
+                      {formData.role === 'intern' && (
+                        <div className="w-2 h-2 rounded-full bg-white"></div>
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <div className="font-medium">Intern/OJT</div>
+                      <div className="text-xs opacity-75">On-the-job trainee</div>
+                    </div>
+                  </label>
+                </div>
               </div>
 
               <div>
