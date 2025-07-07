@@ -13,8 +13,13 @@ const userSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ['intern', 'manager', 'admin', 'staff'],
+    enum: ['intern', 'staff', 'unit_manager', 'branch_manager', 'admin'],
     default: 'intern',
+  },
+  supervisorId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User', // their direct manager
+    default: null
   },
   passwordHash: {
     type: String,
