@@ -1,4 +1,5 @@
 const DtrEntry = require('../models/DtrEntry.model');
+const { DateTime } = require('luxon');
 
 // Create new DTR entry (Admin only)
 exports.createDtrEntry = async (req, res) => {
@@ -39,18 +40,18 @@ exports.getMyDtrEntries = async (req, res) => {
 exports.timeIn = async (req, res) => {
   try {
     const userId = req.user.userId;
-    const today = new Date().toISOString().slice(0, 10);
+    const today = DateTime.now().setZone('Asia/Manila').toISODate(); // "2025-06-28"
 
     const existing = await DtrEntry.findOne({
       userId,
-      date: { $gte: new Date(today), $lt: new Date(`${today}T23:59:59Z`) }
+      date: new Date(today)
     });
 
     if (existing) return res.status(400).json({ message: 'Already timed in today.' });
 
     const newEntry = new DtrEntry({
       userId,
-      date: new Date(),
+      date: new Date(today),
       timeIn: new Date()
     });
 
