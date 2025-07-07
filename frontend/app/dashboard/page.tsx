@@ -3,6 +3,10 @@
 import { useState, useEffect, useRef } from "react";
 import AuthGuard from "@/components/AuthGuard";
 import DTRSystem from "@/components/DTRSystem";
+import SupervisionManager from "@/components/SupervisionManager";
+import TeamReports from "@/components/TeamReports";
+import TeamStatus from "@/components/TeamStatus";
+import AnalyticsDashboard from "@/components/AnalyticsDashboard";
 import { removeToken, getToken, getUserFromToken } from "@/utils/auth";
 import { useRouter } from "next/navigation";
 
@@ -23,6 +27,8 @@ export default function Dashboard() {
       // Set default tab based on user role
       if (userData.role === 'staff' || userData.role === 'intern') {
         setActiveTab('dtr');
+      } else if (userData.role === 'unit_manager') {
+        setActiveTab('reports');
       }
     }
   }, []);
@@ -93,8 +99,20 @@ export default function Dashboard() {
       .slice(0, 2);
   };
 
+  const formatRole = (role: string) => {
+    if (!role) return '';
+    return role
+      .split('_')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  };
+
   const isAdmin = () => {
     return user?.role === 'admin';
+  };
+
+  const isUnitManager = () => {
+    return user?.role === 'unit_manager';
   };
 
   const isStaffOrIntern = () => {
@@ -169,8 +187,8 @@ export default function Dashboard() {
                           <p className="text-xs text-gray-400 truncate">
                             {user ? user.email : ''}
                           </p>
-                          <p className="text-xs text-purple-400 capitalize">
-                            {user ? user.role : ''}
+                          <p className="text-xs text-purple-400">
+                            {user ? formatRole(user.role) : ''}
                           </p>
                         </div>
                       </div>
@@ -230,6 +248,21 @@ export default function Dashboard() {
                   }`}
                 >
                   {tab}
+                </button>
+              ))
+            ) : isUnitManager() ? (
+              // Unit Manager navigation
+              ['reports', 'analytics', 'team', 'supervision'].map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={`py-3 sm:py-4 px-1 border-b-2 font-medium text-xs sm:text-sm capitalize transition-colors whitespace-nowrap ${
+                    activeTab === tab
+                      ? 'border-purple-400 text-purple-400'
+                      : 'border-transparent text-gray-400 hover:text-white hover:border-white/20'
+                  }`}
+                >
+                  {tab === 'supervision' ? 'Manage Team' : tab}
                 </button>
               ))
             ) : (
@@ -348,6 +381,14 @@ export default function Dashboard() {
                 </div>
               </div>
             </div>
+          </>
+        ) : isUnitManager() ? (
+          // Unit Manager Dashboard Content
+          <>
+            {activeTab === 'reports' && <TeamReports />}
+            {activeTab === 'analytics' && <AnalyticsDashboard />}
+            {activeTab === 'team' && <TeamStatus />}
+            {activeTab === 'supervision' && <SupervisionManager />}
           </>
         ) : (
           // Staff/Intern DTR Content
