@@ -43,13 +43,17 @@ exports.login = async (req, res) => {
 
 exports.signup = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, role } = req.body;
 
     // Check if user already exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ message: 'User already exists with this email' });
     }
+
+    // Validate role
+    const validRoles = ['staff', 'intern'];
+    const userRole = role && validRoles.includes(role) ? role : 'intern';
 
     // Hash password
     const saltRounds = 10;
@@ -60,7 +64,7 @@ exports.signup = async (req, res) => {
       name,
       email,
       passwordHash: hashedPassword,
-      role: 'intern' // Default role - using valid enum value
+      role: userRole
     });
 
     await user.save();
