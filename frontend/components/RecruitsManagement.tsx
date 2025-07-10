@@ -21,6 +21,7 @@ interface Recruit {
   school?: string;
   educationalStatus: 'UNDERGRAD' | 'GRADUATE' | 'GRADUATING';
   applicationStatus: 'Applied' | 'Interviewed' | 'Hired' | 'Rejected' | 'Pending';
+  source?: string;
   resumeUrl?: string;
   interviewDate?: string;
   interviewTime?: string;
@@ -51,6 +52,7 @@ export default function RecruitsManagement() {
     course: '',
     school: '',
     educationalStatus: 'UNDERGRAD' as const,
+    source: '',
     dateApplied: new Date().toISOString().split('T')[0]
   });
 
@@ -275,6 +277,7 @@ export default function RecruitsManagement() {
       course: '',
       school: '',
       educationalStatus: 'UNDERGRAD',
+      source: '',
       dateApplied: new Date().toISOString().split('T')[0]
     });
     setSelectedFile(null);
@@ -284,12 +287,20 @@ export default function RecruitsManagement() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'Applied': return 'bg-blue-500/20 text-blue-400';
+      case 'Pending': return 'bg-orange-500/20 text-orange-400'; // For scheduled interviews
       case 'Interviewed': return 'bg-yellow-500/20 text-yellow-400';
       case 'Hired': return 'bg-green-500/20 text-green-400';
       case 'Rejected': return 'bg-red-500/20 text-red-400';
-      case 'Pending': return 'bg-gray-500/20 text-gray-400';
       default: return 'bg-gray-500/20 text-gray-400';
     }
+  };
+
+  // Get status display text
+  const getStatusDisplayText = (recruit: Recruit) => {
+    if (recruit.applicationStatus === 'Pending' && recruit.interviewDate) {
+      return 'Interview Scheduled';
+    }
+    return recruit.applicationStatus;
   };
 
   if (loading) {
@@ -343,13 +354,17 @@ export default function RecruitsManagement() {
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
           className="bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+          style={{
+            backgroundColor: 'rgba(255, 255, 255, 0.1)',
+            color: 'white'
+          }}
         >
-          <option value="all">All Status</option>
-          <option value="Applied">Applied</option>
-          <option value="Interviewed">Interviewed</option>
-          <option value="Hired">Hired</option>
-          <option value="Rejected">Rejected</option>
-          <option value="Pending">Pending</option>
+          <option value="all" style={{ backgroundColor: '#1f2937', color: 'white' }}>All Status</option>
+          <option value="Applied" style={{ backgroundColor: '#1f2937', color: 'white' }}>Applied</option>
+          <option value="Pending" style={{ backgroundColor: '#1f2937', color: 'white' }}>Pending Interview</option>
+          <option value="Interviewed" style={{ backgroundColor: '#1f2937', color: 'white' }}>Interviewed</option>
+          <option value="Hired" style={{ backgroundColor: '#1f2937', color: 'white' }}>Hired</option>
+          <option value="Rejected" style={{ backgroundColor: '#1f2937', color: 'white' }}>Rejected</option>
         </select>
       </div>
 
@@ -387,6 +402,11 @@ export default function RecruitsManagement() {
                       <div className="text-white font-medium">{recruit.fullName}</div>
                       <div className="text-gray-400 text-sm">{recruit.email}</div>
                       <div className="text-gray-400 text-sm">{recruit.permanentAddress}</div>
+                      {recruit.source && (
+                        <div className="text-purple-400 text-xs mt-1 bg-purple-500/20 px-2 py-1 rounded-full inline-block">
+                          Source: {recruit.source}
+                        </div>
+                      )}
                     </div>
                   </td>
                   <td className="px-6 py-4">
@@ -400,17 +420,22 @@ export default function RecruitsManagement() {
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <select
-                      value={recruit.applicationStatus}
-                      onChange={(e) => handleStatusUpdate(recruit._id, e.target.value)}
-                      className={`px-2 py-1 rounded-full text-xs font-medium border-0 focus:outline-none focus:ring-2 focus:ring-purple-500 ${getStatusColor(recruit.applicationStatus)}`}
-                    >
-                      <option value="Applied">Applied</option>
-                      <option value="Interviewed">Interviewed</option>
-                      <option value="Hired">Hired</option>
-                      <option value="Rejected">Rejected</option>
-                      <option value="Pending">Pending</option>
-                    </select>
+                    <div className="flex flex-col space-y-2">
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium inline-block text-center ${getStatusColor(recruit.applicationStatus)}`}>
+                        {getStatusDisplayText(recruit)}
+                      </span>
+                      <select
+                        value={recruit.applicationStatus}
+                        onChange={(e) => handleStatusUpdate(recruit._id, e.target.value)}
+                        className="text-xs bg-white/10 border border-white/20 rounded px-2 py-1 text-white focus:outline-none focus:ring-1 focus:ring-purple-500"
+                      >
+                        <option value="Applied" style={{ backgroundColor: '#1f2937', color: 'white' }}>Applied</option>
+                        <option value="Pending" style={{ backgroundColor: '#1f2937', color: 'white' }}>Pending Interview</option>
+                        <option value="Interviewed" style={{ backgroundColor: '#1f2937', color: 'white' }}>Interviewed</option>
+                        <option value="Hired" style={{ backgroundColor: '#1f2937', color: 'white' }}>Hired</option>
+                        <option value="Rejected" style={{ backgroundColor: '#1f2937', color: 'white' }}>Rejected</option>
+                      </select>
+                    </div>
                   </td>
                   <td className="px-6 py-4">
                     {recruit.interviewDate ? (
@@ -533,9 +558,9 @@ export default function RecruitsManagement() {
                     onChange={(e) => setFormData({ ...formData, educationalStatus: e.target.value as any })}
                     className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
                   >
-                    <option value="UNDERGRAD">Undergraduate</option>
-                    <option value="GRADUATE">Graduate</option>
-                    <option value="GRADUATING">Graduating</option>
+                    <option value="UNDERGRAD" style={{ backgroundColor: '#1f2937', color: 'white' }}>Undergraduate</option>
+                    <option value="GRADUATE" style={{ backgroundColor: '#1f2937', color: 'white' }}>Graduate</option>
+                    <option value="GRADUATING" style={{ backgroundColor: '#1f2937', color: 'white' }}>Graduating</option>
                   </select>
                 </div>
 
@@ -561,6 +586,29 @@ export default function RecruitsManagement() {
                     onChange={(e) => setFormData({ ...formData, school: e.target.value })}
                     className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
                   />
+                </div>
+
+                <div>
+                  <label className="block text-white text-sm font-medium mb-2">
+                    Source
+                  </label>
+                  <select
+                    value={formData.source}
+                    onChange={(e) => setFormData({ ...formData, source: e.target.value })}
+                    className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  >
+                    <option value="" style={{ backgroundColor: '#1f2937', color: 'white' }}>Select Source</option>
+                    <option value="Job Portal" style={{ backgroundColor: '#1f2937', color: 'white' }}>Job Portal</option>
+                    <option value="LinkedIn" style={{ backgroundColor: '#1f2937', color: 'white' }}>LinkedIn</option>
+                    <option value="Facebook" style={{ backgroundColor: '#1f2937', color: 'white' }}>Facebook</option>
+                    <option value="Company Website" style={{ backgroundColor: '#1f2937', color: 'white' }}>Company Website</option>
+                    <option value="Employee Referral" style={{ backgroundColor: '#1f2937', color: 'white' }}>Employee Referral</option>
+                    <option value="University/School" style={{ backgroundColor: '#1f2937', color: 'white' }}>University/School</option>
+                    <option value="Walk-in" style={{ backgroundColor: '#1f2937', color: 'white' }}>Walk-in</option>
+                    <option value="Indeed" style={{ backgroundColor: '#1f2937', color: 'white' }}>Indeed</option>
+                    <option value="JobStreet" style={{ backgroundColor: '#1f2937', color: 'white' }}>JobStreet</option>
+                    <option value="Other" style={{ backgroundColor: '#1f2937', color: 'white' }}>Other</option>
+                  </select>
                 </div>
               </div>
 
@@ -685,9 +733,9 @@ export default function RecruitsManagement() {
                   onChange={(e) => setScheduleData({ ...scheduleData, interviewerId: e.target.value })}
                   className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
                 >
-                  <option value="">Select Interviewer</option>
+                  <option value="" style={{ backgroundColor: '#1f2937', color: 'white' }}>Select Interviewer</option>
                   {users.map((user) => (
-                    <option key={user._id} value={user._id}>
+                    <option key={user._id} value={user._id} style={{ backgroundColor: '#1f2937', color: 'white' }}>
                       {user.name} - {user.role}
                     </option>
                   ))}
