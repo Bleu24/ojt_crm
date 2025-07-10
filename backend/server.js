@@ -1,6 +1,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const path = require('path');
 require('dotenv').config();
 
 const app = express();
@@ -19,10 +20,12 @@ const postRoutes = require('./routes/posts.routes');
 const recruitRoutes = require('./routes/recruits.routes');
 const reportsRoutes = require('./routes/reports.routes');
 
-
-
 // Middlewares (Routes)
 app.use(express.json());
+
+// Serve static files for uploads
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 app.use('/api/users', userRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/dtr', dtrRoutes);
