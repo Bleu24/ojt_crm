@@ -23,8 +23,8 @@ const reportsRoutes = require('./routes/reports.routes');
 // Middlewares (Routes)
 app.use(express.json());
 
-// Serve static files for uploads
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// Serve static files for uploads under /api/uploads
+app.use('/api/uploads', express.static(path.join(__dirname, 'uploads')));
 
 app.use('/api/users', userRoutes);
 app.use('/api/auth', authRoutes);
