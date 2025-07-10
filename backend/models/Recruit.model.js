@@ -9,6 +9,7 @@ const RecruitSchema = new mongoose.Schema({
   location: { type: String },
   course: { type: String },
   school: { type: String },
+  source: { type: String }, // Where the recruit came from
   educationalStatus: {
     type: String,
     enum: ['UNDERGRAD', 'GRADUATE', 'GRADUATING'],
