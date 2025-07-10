@@ -74,6 +74,11 @@ exports.getAllRecruits = async (req, res) => {
       query.applicationStatus = status;
     }
 
+    // For unit managers, only show recruits assigned to them for final interview
+    if (req.user.role === 'unit_manager') {
+      query.finalInterviewAssignedTo = req.user.userId;
+    }
+
     // Search functionality
     if (search) {
       query.$or = [
@@ -86,6 +91,9 @@ exports.getAllRecruits = async (req, res) => {
     const recruits = await Recruit.find(query)
       .populate('assignedTo', 'name role')
       .populate('interviewer', 'name role')
+      .populate('initialInterviewer', 'name role')
+      .populate('finalInterviewer', 'name role')
+      .populate('finalInterviewAssignedTo', 'name role')
       .sort({ createdAt: -1 })
       .limit(limit * 1)
       .skip((page - 1) * limit);
@@ -197,6 +205,179 @@ exports.scheduleInterview = async (req, res) => {
   }
 };
 
+// Schedule initial interview (Step 1 - by intern/staff)
+exports.scheduleInitialInterview = async (req, res) => {
+  try {
+    const { recruitId } = req.params;
+    const { interviewDate, interviewTime, interviewerId, interviewNotes } = req.body;
+
+    // Only intern and staff can schedule initial interviews
+    if (!['intern', 'staff'].includes(req.user.role)) {
+      return res.status(403).json({ error: 'Only intern and staff can schedule initial interviews' });
+    }
+
+    // Validate interviewer exists
+    if (interviewerId) {
+      const interviewer = await User.findById(interviewerId);
+      if (!interviewer) {
+        return res.status(404).json({ message: 'Interviewer not found' });
+      }
+    }
+
+    const updated = await Recruit.findByIdAndUpdate(
+      recruitId,
+      {
+        initialInterviewDate: new Date(interviewDate),
+        initialInterviewTime: interviewTime,
+        initialInterviewer: interviewerId,
+        initialInterviewNotes: interviewNotes,
+        applicationStatus: 'Pending'
+      },
+      { new: true }
+    )
+    .populate('assignedTo', 'name role')
+    .populate('initialInterviewer', 'name role')
+    .populate('finalInterviewer', 'name role');
+
+    if (!updated) {
+      return res.status(404).json({ message: 'Recruit not found' });
+    }
+
+    res.status(200).json({ message: 'Initial interview scheduled successfully', recruit: updated });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// Complete initial interview and update status
+exports.completeInitialInterview = async (req, res) => {
+  try {
+    const { recruitId } = req.params;
+    const { notes, passed, finalInterviewAssignedTo } = req.body;
+
+    // Only intern and staff can complete initial interviews
+    if (!['intern', 'staff'].includes(req.user.role)) {
+      return res.status(403).json({ error: 'Only intern and staff can complete initial interviews' });
+    }
+
+    const updateData = {
+      initialInterviewCompleted: true,
+      initialInterviewNotes: notes
+    };
+
+    // If passed, mark for final interview and assign to unit manager if specified
+    if (passed) {
+      updateData.applicationStatus = 'Pending Final Interview';
+      if (finalInterviewAssignedTo) {
+        // Validate that the assigned user is a unit manager
+        const assignedUser = await User.findById(finalInterviewAssignedTo);
+        if (!assignedUser || assignedUser.role !== 'unit_manager') {
+          return res.status(400).json({ error: 'Final interview can only be assigned to unit managers' });
+        }
+        updateData.finalInterviewAssignedTo = finalInterviewAssignedTo;
+      }
+    } else {
+      updateData.applicationStatus = 'Rejected';
+    }
+
+    const updated = await Recruit.findByIdAndUpdate(recruitId, updateData, { new: true })
+      .populate('assignedTo', 'name role')
+      .populate('initialInterviewer', 'name role')
+      .populate('finalInterviewer', 'name role')
+      .populate('finalInterviewAssignedTo', 'name role');
+
+    if (!updated) {
+      return res.status(404).json({ message: 'Recruit not found' });
+    }
+
+    res.status(200).json({ message: 'Initial interview completed successfully', recruit: updated });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// Schedule final interview (Step 2 - by unit manager)
+exports.scheduleFinalInterview = async (req, res) => {
+  try {
+    const { recruitId } = req.params;
+    const { interviewDate, interviewTime, interviewerId, interviewNotes } = req.body;
+
+    // Only unit managers can schedule final interviews
+    if (req.user.role !== 'unit_manager') {
+      return res.status(403).json({ error: 'Only unit managers can schedule final interviews' });
+    }
+
+    // Check if initial interview was completed and passed
+    const recruit = await Recruit.findById(recruitId);
+    if (!recruit.initialInterviewCompleted || recruit.applicationStatus !== 'Pending Final Interview') {
+      return res.status(400).json({ error: 'Initial interview must be completed first' });
+    }
+
+    // Validate interviewer exists
+    if (interviewerId) {
+      const interviewer = await User.findById(interviewerId);
+      if (!interviewer) {
+        return res.status(404).json({ message: 'Interviewer not found' });
+      }
+    }
+
+    const updated = await Recruit.findByIdAndUpdate(
+      recruitId,
+      {
+        finalInterviewDate: new Date(interviewDate),
+        finalInterviewTime: interviewTime,
+        finalInterviewer: interviewerId,
+        finalInterviewNotes: interviewNotes,
+        applicationStatus: 'Pending Final Interview'
+      },
+      { new: true }
+    )
+    .populate('assignedTo', 'name role')
+    .populate('initialInterviewer', 'name role')
+    .populate('finalInterviewer', 'name role');
+
+    if (!updated) {
+      return res.status(404).json({ message: 'Recruit not found' });
+    }
+
+    res.status(200).json({ message: 'Final interview scheduled successfully', recruit: updated });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// Complete final interview and update status
+exports.completeFinalInterview = async (req, res) => {
+  try {
+    const { recruitId } = req.params;
+    const { notes, decision } = req.body; // decision: 'hired' or 'rejected'
+
+    // Only unit managers can complete final interviews
+    if (req.user.role !== 'unit_manager') {
+      return res.status(403).json({ error: 'Only unit managers can complete final interviews' });
+    }
+
+    const updateData = {
+      finalInterviewCompleted: true,
+      finalInterviewNotes: notes,
+      applicationStatus: decision === 'hired' ? 'Hired' : 'Rejected'
+    };
+
+    const updated = await Recruit.findByIdAndUpdate(recruitId, updateData, { new: true })
+      .populate('assignedTo', 'name role')
+      .populate('initialInterviewer', 'name role')
+      .populate('finalInterviewer', 'name role');
+
+    if (!updated) {
+      return res.status(404).json({ message: 'Recruit not found' });
+    }
+
+    res.status(200).json({ message: 'Final interview completed successfully', recruit: updated });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
 // Assign recruit to a user
 exports.assignRecruit = async (req, res) => {
   try {
@@ -232,6 +413,16 @@ exports.getAllUsers = async (req, res) => {
   try {
     const users = await User.find({}, 'name email role').sort({ name: 1 });
     res.status(200).json(users);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// Get unit managers for final interview assignment
+exports.getUnitManagers = async (req, res) => {
+  try {
+    const unitManagers = await User.find({ role: 'unit_manager' }, 'name email role').sort({ name: 1 });
+    res.status(200).json(unitManagers);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
