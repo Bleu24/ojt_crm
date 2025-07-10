@@ -58,11 +58,11 @@ exports.createRecruit = async (req, res) => {
   }
 };
 
-// Get all recruits (for OJT and staff roles)
+// Get all recruits (for Intern and staff roles)
 exports.getAllRecruits = async (req, res) => {
   try {
-    // Only allow OJT and staff to see all recruits
-    if (!['ojt', 'staff', 'unit_manager', 'admin'].includes(req.user.role)) {
+    // Only allow Intern and staff to see all recruits
+    if (!['intern', 'staff', 'unit_manager', 'admin'].includes(req.user.role)) {
       return res.status(403).json({ error: 'Unauthorized' });
     }
 
@@ -180,7 +180,7 @@ exports.scheduleInterview = async (req, res) => {
         interviewTime,
         interviewer: interviewerId,
         interviewNotes,
-        applicationStatus: 'Interviewed'
+        applicationStatus: 'Pending'
       },
       { new: true }
     )
