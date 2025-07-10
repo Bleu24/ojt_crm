@@ -20,13 +20,31 @@ interface Recruit {
   course?: string;
   school?: string;
   educationalStatus: 'UNDERGRAD' | 'GRADUATE' | 'GRADUATING';
-  applicationStatus: 'Applied' | 'Interviewed' | 'Hired' | 'Rejected' | 'Pending';
+  applicationStatus: 'Applied' | 'Interviewed' | 'Hired' | 'Rejected' | 'Pending' | 'Pending Final Interview';
   source?: string;
   resumeUrl?: string;
+  
+  // Step 1 Interview (by intern/staff)
+  initialInterviewDate?: string;
+  initialInterviewTime?: string;
+  initialInterviewer?: User;
+  initialInterviewNotes?: string;
+  initialInterviewCompleted?: boolean;
+  
+  // Step 2 Interview (by unit manager)
+  finalInterviewDate?: string;
+  finalInterviewTime?: string;
+  finalInterviewer?: User;
+  finalInterviewNotes?: string;
+  finalInterviewCompleted?: boolean;
+  finalInterviewAssignedTo?: User; // Which unit manager is assigned to handle the final interview
+  
+  // Legacy fields (keeping for backward compatibility)
   interviewDate?: string;
   interviewTime?: string;
   interviewer?: User;
   interviewNotes?: string;
+  
   assignedTo: User;
   dateApplied: string;
   createdAt: string;
@@ -35,13 +53,16 @@ interface Recruit {
 export default function RecruitsManagement() {
   const [recruits, setRecruits] = useState<Recruit[]>([]);
   const [users, setUsers] = useState<User[]>([]);
+  const [unitManagers, setUnitManagers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [showAssignModal, setShowAssignModal] = useState(false);
   const [selectedRecruit, setSelectedRecruit] = useState<Recruit | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [selectedUnitManager, setSelectedUnitManager] = useState('');
 
   // Form state
   const [formData, setFormData] = useState({
@@ -61,10 +82,18 @@ export default function RecruitsManagement() {
     interviewDate: '',
     interviewTime: '',
     interviewerId: '',
-    interviewNotes: ''
+    interviewNotes: '',
+    interviewType: 'initial' as 'initial' | 'final'
   });
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
+  // Get current user info
+  const getCurrentUser = () => {
+    const token = getToken();
+    if (!token) return null;
+    return getUserFromToken(token);
+  };
 
   // Fetch recruits
   const fetchRecruits = async () => {
@@ -150,9 +179,32 @@ export default function RecruitsManagement() {
     }
   };
 
+  // Fetch unit managers for assignment
+  const fetchUnitManagers = async () => {
+    try {
+      const token = getToken();
+      if (!token) return;
+
+      const response = await fetch(`${API_BASE_URL}/recruits/unit-managers`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setUnitManagers(data);
+      }
+    } catch (err) {
+      console.error('Error fetching unit managers:', err);
+    }
+  };
+
   useEffect(() => {
     fetchRecruits();
     fetchUsers();
+    fetchUnitManagers();
   }, [searchTerm, statusFilter]);
 
   // Handle form submission
@@ -211,28 +263,43 @@ export default function RecruitsManagement() {
         return;
       }
 
-      const response = await fetch(`${API_BASE_URL}/recruits/${selectedRecruit._id}/schedule`, {
+      const endpoint = scheduleData.interviewType === 'initial' 
+        ? `${API_BASE_URL}/recruits/${selectedRecruit._id}/schedule-initial`
+        : `${API_BASE_URL}/recruits/${selectedRecruit._id}/schedule-final`;
+
+      const response = await fetch(endpoint, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(scheduleData)
+        body: JSON.stringify({
+          interviewDate: scheduleData.interviewDate,
+          interviewTime: scheduleData.interviewTime,
+          interviewerId: scheduleData.interviewerId,
+          interviewNotes: scheduleData.interviewNotes
+        })
       });
 
       if (!response.ok) {
-        throw new Error('Failed to schedule interview');
+        throw new Error(`Failed to schedule ${scheduleData.interviewType} interview`);
       }
 
       const result = await response.json();
       setRecruits(recruits.map(r => r._id === selectedRecruit._id ? result.recruit : r));
       setShowScheduleModal(false);
       setSelectedRecruit(null);
-      setScheduleData({ interviewDate: '', interviewTime: '', interviewerId: '', interviewNotes: '' });
+      setScheduleData({ 
+        interviewDate: '', 
+        interviewTime: '', 
+        interviewerId: '', 
+        interviewNotes: '',
+        interviewType: 'initial'
+      });
       setError('');
     } catch (err) {
       console.error('Error scheduling interview:', err);
-      setError('Failed to schedule interview. Please try again.');
+      setError(`Failed to schedule ${scheduleData.interviewType} interview. Please try again.`);
     }
   };
 
@@ -267,6 +334,45 @@ export default function RecruitsManagement() {
     }
   };
 
+  // Handle complete interview
+  const handleCompleteInterview = async (recruitId: string, interviewType: 'initial' | 'final', passed: boolean, notes: string = '', assignedTo?: string) => {
+    try {
+      const token = getToken();
+      if (!token) {
+        setError('No authentication token found');
+        return;
+      }
+
+      const endpoint = interviewType === 'initial' 
+        ? `${API_BASE_URL}/recruits/${recruitId}/complete-initial`
+        : `${API_BASE_URL}/recruits/${recruitId}/complete-final`;
+
+      const body = interviewType === 'initial' 
+        ? { passed, notes, finalInterviewAssignedTo: assignedTo }
+        : { decision: passed ? 'hired' : 'rejected', notes };
+
+      const response = await fetch(endpoint, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(body)
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to complete ${interviewType} interview`);
+      }
+
+      const result = await response.json();
+      setRecruits(recruits.map(r => r._id === recruitId ? result.recruit : r));
+      setError('');
+    } catch (err) {
+      console.error(`Error completing ${interviewType} interview:`, err);
+      setError(`Failed to complete ${interviewType} interview. Please try again.`);
+    }
+  };
+
   // Reset form
   const resetForm = () => {
     setFormData({
@@ -288,6 +394,7 @@ export default function RecruitsManagement() {
     switch (status) {
       case 'Applied': return 'bg-blue-500/20 text-blue-400';
       case 'Pending': return 'bg-orange-500/20 text-orange-400'; // For scheduled interviews
+      case 'Pending Final Interview': return 'bg-purple-500/20 text-purple-400'; // Awaiting final interview
       case 'Interviewed': return 'bg-yellow-500/20 text-yellow-400';
       case 'Hired': return 'bg-green-500/20 text-green-400';
       case 'Rejected': return 'bg-red-500/20 text-red-400';
@@ -297,10 +404,85 @@ export default function RecruitsManagement() {
 
   // Get status display text
   const getStatusDisplayText = (recruit: Recruit) => {
-    if (recruit.applicationStatus === 'Pending' && recruit.interviewDate) {
+    if (recruit.applicationStatus === 'Pending' && (recruit.interviewDate || recruit.initialInterviewDate || recruit.finalInterviewDate)) {
       return 'Interview Scheduled';
     }
+    if (recruit.applicationStatus === 'Pending Final Interview') {
+      return 'Awaiting Final Interview';
+    }
     return recruit.applicationStatus;
+  };
+
+  // Determine what kind of interview can be scheduled
+  const getAvailableInterviewType = (recruit: Recruit, userRole: string) => {
+    const currentUser = getCurrentUser();
+    
+    // If initial interview not completed, only intern/staff can schedule initial
+    if (!recruit.initialInterviewCompleted && ['intern', 'staff'].includes(userRole)) {
+      return 'initial';
+    }
+    // If initial completed but final not scheduled/completed, only assigned unit_manager can schedule final
+    if (recruit.initialInterviewCompleted && !recruit.finalInterviewCompleted && 
+        userRole === 'unit_manager' && 
+        recruit.finalInterviewAssignedTo?._id === currentUser?.userId) {
+      return 'final';
+    }
+    // If both completed or user doesn't have permission
+    return null;
+  };
+
+  // Get interview status info for display
+  const getInterviewStatusInfo = (recruit: Recruit) => {
+    const currentUser = getCurrentUser();
+    if (!currentUser) return { text: 'Not scheduled', canSchedule: false };
+
+    const availableType = getAvailableInterviewType(recruit, currentUser.role);
+    
+    if (recruit.finalInterviewCompleted) {
+      return { text: 'Interviews Completed', canSchedule: false };
+    }
+    
+    if (recruit.finalInterviewDate && !recruit.finalInterviewCompleted) {
+      return {
+        text: `Final: ${new Date(recruit.finalInterviewDate).toLocaleDateString()} ${recruit.finalInterviewTime}`,
+        subText: recruit.finalInterviewer?.name,
+        canSchedule: currentUser.role === 'unit_manager' && recruit.finalInterviewAssignedTo?._id === currentUser.userId
+      };
+    }
+    
+    if (recruit.initialInterviewCompleted && recruit.applicationStatus === 'Pending Final Interview') {
+      const assignedText = recruit.finalInterviewAssignedTo 
+        ? `Assigned to: ${recruit.finalInterviewAssignedTo.name}`
+        : 'Not assigned';
+      return {
+        text: 'Awaiting Final Interview',
+        subText: assignedText,
+        canSchedule: currentUser.role === 'unit_manager' && recruit.finalInterviewAssignedTo?._id === currentUser.userId
+      };
+    }
+    
+    if (recruit.initialInterviewDate && !recruit.initialInterviewCompleted) {
+      return {
+        text: `Initial: ${new Date(recruit.initialInterviewDate).toLocaleDateString()} ${recruit.initialInterviewTime}`,
+        subText: recruit.initialInterviewer?.name,
+        canSchedule: ['intern', 'staff'].includes(currentUser.role)
+      };
+    }
+    
+    if (!recruit.initialInterviewDate && availableType === 'initial') {
+      return { text: 'Not scheduled', canSchedule: true };
+    }
+    
+    return { text: 'Not scheduled', canSchedule: false };
+  };
+
+  // Format role for display
+  const formatRole = (role: string) => {
+    if (!role) return '';
+    return role
+      .split('_')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
   };
 
   if (loading) {
@@ -362,6 +544,7 @@ export default function RecruitsManagement() {
           <option value="all" style={{ backgroundColor: '#1f2937', color: 'white' }}>All Status</option>
           <option value="Applied" style={{ backgroundColor: '#1f2937', color: 'white' }}>Applied</option>
           <option value="Pending" style={{ backgroundColor: '#1f2937', color: 'white' }}>Pending Interview</option>
+          <option value="Pending Final Interview" style={{ backgroundColor: '#1f2937', color: 'white' }}>Pending Final Interview</option>
           <option value="Interviewed" style={{ backgroundColor: '#1f2937', color: 'white' }}>Interviewed</option>
           <option value="Hired" style={{ backgroundColor: '#1f2937', color: 'white' }}>Hired</option>
           <option value="Rejected" style={{ backgroundColor: '#1f2937', color: 'white' }}>Rejected</option>
@@ -431,6 +614,7 @@ export default function RecruitsManagement() {
                       >
                         <option value="Applied" style={{ backgroundColor: '#1f2937', color: 'white' }}>Applied</option>
                         <option value="Pending" style={{ backgroundColor: '#1f2937', color: 'white' }}>Pending Interview</option>
+                        <option value="Pending Final Interview" style={{ backgroundColor: '#1f2937', color: 'white' }}>Pending Final Interview</option>
                         <option value="Interviewed" style={{ backgroundColor: '#1f2937', color: 'white' }}>Interviewed</option>
                         <option value="Hired" style={{ backgroundColor: '#1f2937', color: 'white' }}>Hired</option>
                         <option value="Rejected" style={{ backgroundColor: '#1f2937', color: 'white' }}>Rejected</option>
@@ -438,47 +622,114 @@ export default function RecruitsManagement() {
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    {recruit.interviewDate ? (
-                      <div>
-                        <div className="text-white text-sm">
-                          {new Date(recruit.interviewDate).toLocaleDateString()}
+                    {(() => {
+                      const interviewInfo = getInterviewStatusInfo(recruit);
+                      return (
+                        <div>
+                          <div className="text-white text-sm">
+                            {interviewInfo.text}
+                          </div>
+                          {interviewInfo.subText && (
+                            <div className="text-gray-400 text-sm">{interviewInfo.subText}</div>
+                          )}
                         </div>
-                        <div className="text-gray-400 text-sm">{recruit.interviewTime}</div>
-                        {recruit.interviewer && (
-                          <div className="text-gray-400 text-sm">{recruit.interviewer.name}</div>
-                        )}
-                      </div>
-                    ) : (
-                      <span className="text-gray-400">Not scheduled</span>
-                    )}
+                      );
+                    })()}
                   </td>
                   <td className="px-6 py-4">
-                    <div className="flex space-x-2">
-                      <button
-                        onClick={() => {
-                          setSelectedRecruit(recruit);
-                          setScheduleData({
-                            interviewDate: recruit.interviewDate ? recruit.interviewDate.split('T')[0] : '',
-                            interviewTime: recruit.interviewTime || '',
-                            interviewerId: recruit.interviewer?._id || '',
-                            interviewNotes: recruit.interviewNotes || ''
-                          });
-                          setShowScheduleModal(true);
-                        }}
-                        className="px-3 py-1 bg-blue-500/20 text-blue-400 rounded-lg hover:bg-blue-500/30 transition-colors text-sm"
-                      >
-                        Schedule
-                      </button>
-                      {recruit.resumeUrl && (
-                        <a
-                          href={`${API_BASE_URL}/${recruit.resumeUrl}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="px-3 py-1 bg-green-500/20 text-green-400 rounded-lg hover:bg-green-500/30 transition-colors text-sm"
-                        >
-                          Resume
-                        </a>
-                      )}
+                    <div className="flex flex-col space-y-2">
+                      {(() => {
+                        const currentUser = getCurrentUser();
+                        const interviewInfo = getInterviewStatusInfo(recruit);
+                        const availableType = currentUser ? getAvailableInterviewType(recruit, currentUser.role) : null;
+                        
+                        return (
+                          <>
+                            <div className="flex space-x-2">
+                              {interviewInfo.canSchedule && availableType && (
+                                <button
+                                  onClick={() => {
+                                    setSelectedRecruit(recruit);
+                                    const isInitial = availableType === 'initial';
+                                    setScheduleData({
+                                      interviewDate: isInitial 
+                                        ? (recruit.initialInterviewDate ? recruit.initialInterviewDate.split('T')[0] : '')
+                                        : (recruit.finalInterviewDate ? recruit.finalInterviewDate.split('T')[0] : ''),
+                                      interviewTime: isInitial ? (recruit.initialInterviewTime || '') : (recruit.finalInterviewTime || ''),
+                                      interviewerId: isInitial 
+                                        ? (recruit.initialInterviewer?._id || '')
+                                        : (recruit.finalInterviewer?._id || ''),
+                                      interviewNotes: isInitial 
+                                        ? (recruit.initialInterviewNotes || '')
+                                        : (recruit.finalInterviewNotes || ''),
+                                      interviewType: availableType
+                                    });
+                                    setShowScheduleModal(true);
+                                  }}
+                                  className="px-3 py-1 bg-blue-500/20 text-blue-400 rounded-lg hover:bg-blue-500/30 transition-colors text-sm"
+                                >
+                                  {availableType === 'initial' ? 'Schedule Initial' : 'Schedule Final'}
+                                </button>
+                              )}
+                              
+                              {recruit.resumeUrl && (
+                                <a
+                                  href={`${API_BASE_URL}/${recruit.resumeUrl}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="px-3 py-1 bg-green-500/20 text-green-400 rounded-lg hover:bg-green-500/30 transition-colors text-sm"
+                                >
+                                  Resume
+                                </a>
+                              )}
+                            </div>
+                            
+                            {/* Complete Interview Buttons */}
+                            {(recruit.initialInterviewDate && !recruit.initialInterviewCompleted && 
+                              ['intern', 'staff'].includes(currentUser?.role || '')) && (
+                              <div className="flex space-x-1">
+                                <button
+                                  onClick={() => {
+                                    setSelectedRecruit(recruit);
+                                    setShowAssignModal(true);
+                                  }}
+                                  className="px-2 py-1 bg-green-500/20 text-green-400 rounded text-xs hover:bg-green-500/30 transition-colors"
+                                  title="Pass Initial Interview"
+                                >
+                                  ✓ Pass Initial
+                                </button>
+                                <button
+                                  onClick={() => handleCompleteInterview(recruit._id, 'initial', false)}
+                                  className="px-2 py-1 bg-red-500/20 text-red-400 rounded text-xs hover:bg-red-500/30 transition-colors"
+                                  title="Fail Initial Interview"
+                                >
+                                  ✗ Fail Initial
+                                </button>
+                              </div>
+                            )}
+                            
+                            {(recruit.finalInterviewDate && !recruit.finalInterviewCompleted && 
+                              currentUser?.role === 'unit_manager') && (
+                              <div className="flex space-x-1">
+                                <button
+                                  onClick={() => handleCompleteInterview(recruit._id, 'final', true)}
+                                  className="px-2 py-1 bg-green-500/20 text-green-400 rounded text-xs hover:bg-green-500/30 transition-colors"
+                                  title="Hire Candidate"
+                                >
+                                  ✓ Hire
+                                </button>
+                                <button
+                                  onClick={() => handleCompleteInterview(recruit._id, 'final', false)}
+                                  className="px-2 py-1 bg-red-500/20 text-red-400 rounded text-xs hover:bg-red-500/30 transition-colors"
+                                  title="Reject Candidate"
+                                >
+                                  ✗ Reject
+                                </button>
+                              </div>
+                            )}
+                          </>
+                        );
+                      })()}
                     </div>
                   </td>
                 </tr>
@@ -678,7 +929,9 @@ export default function RecruitsManagement() {
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-xl p-6 w-full max-w-md">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-semibold text-white">Schedule Interview</h3>
+              <h3 className="text-xl font-semibold text-white">
+                Schedule {scheduleData.interviewType === 'initial' ? 'Initial' : 'Final'} Interview
+              </h3>
               <button
                 onClick={() => {
                   setShowScheduleModal(false);
@@ -695,6 +948,11 @@ export default function RecruitsManagement() {
             <div className="mb-4">
               <p className="text-white font-medium">{selectedRecruit.fullName}</p>
               <p className="text-gray-400 text-sm">{selectedRecruit.email}</p>
+              {scheduleData.interviewType === 'final' && (
+                <p className="text-yellow-400 text-sm mt-1">
+                  ✓ Initial interview completed
+                </p>
+              )}
             </div>
 
             <form onSubmit={handleScheduleInterview} className="space-y-4">
@@ -734,9 +992,21 @@ export default function RecruitsManagement() {
                   className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
                 >
                   <option value="" style={{ backgroundColor: '#1f2937', color: 'white' }}>Select Interviewer</option>
-                  {users.map((user) => (
+                  {users
+                    .filter(user => {
+                      // For initial interviews, show intern and staff
+                      if (scheduleData.interviewType === 'initial') {
+                        return ['intern', 'staff'].includes(user.role);
+                      }
+                      // For final interviews, show unit managers
+                      if (scheduleData.interviewType === 'final') {
+                        return user.role === 'unit_manager';
+                      }
+                      return false;
+                    })
+                    .map((user) => (
                     <option key={user._id} value={user._id} style={{ backgroundColor: '#1f2937', color: 'white' }}>
-                      {user.name} - {user.role}
+                      {user.name} - {formatRole(user.role)}
                     </option>
                   ))}
                 </select>
@@ -770,10 +1040,90 @@ export default function RecruitsManagement() {
                   type="submit"
                   className="px-6 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-600 hover:to-pink-600 transition-all"
                 >
-                  Schedule Interview
+                  Schedule {scheduleData.interviewType === 'initial' ? 'Initial' : 'Final'} Interview
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Assignment Modal for Final Interview */}
+      {showAssignModal && selectedRecruit && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-xl p-6 w-full max-w-md">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-semibold text-white">Assign Final Interview</h3>
+              <button
+                onClick={() => {
+                  setShowAssignModal(false);
+                  setSelectedRecruit(null);
+                  setSelectedUnitManager('');
+                }}
+                className="text-gray-400 hover:text-white"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="mb-4">
+              <p className="text-white font-medium">{selectedRecruit.fullName}</p>
+              <p className="text-gray-400 text-sm">{selectedRecruit.email}</p>
+              <p className="text-green-400 text-sm mt-1">✓ Passing initial interview</p>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-white text-sm font-medium mb-2">
+                  Assign Final Interview To *
+                </label>
+                <select
+                  value={selectedUnitManager}
+                  onChange={(e) => setSelectedUnitManager(e.target.value)}
+                  className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  required
+                >
+                  <option value="" style={{ backgroundColor: '#1f2937', color: 'white' }}>Select Unit Manager</option>
+                  {unitManagers.map((manager) => (
+                    <option key={manager._id} value={manager._id} style={{ backgroundColor: '#1f2937', color: 'white' }}>
+                      {manager.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex justify-end space-x-4 pt-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowAssignModal(false);
+                    setSelectedRecruit(null);
+                    setSelectedUnitManager('');
+                  }}
+                  className="px-4 py-2 text-gray-400 hover:text-white transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    if (!selectedUnitManager) {
+                      setError('Please select a unit manager to assign the final interview to.');
+                      return;
+                    }
+                    handleCompleteInterview(selectedRecruit._id, 'initial', true, '', selectedUnitManager);
+                    setShowAssignModal(false);
+                    setSelectedRecruit(null);
+                    setSelectedUnitManager('');
+                  }}
+                  className="px-6 py-2 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-lg hover:from-green-600 hover:to-emerald-600 transition-all"
+                  disabled={!selectedUnitManager}
+                >
+                  Pass & Assign
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
