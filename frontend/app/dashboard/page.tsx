@@ -8,6 +8,7 @@ import TeamReports from "@/components/TeamReports";
 import TeamStatus from "@/components/TeamStatus";
 import AnalyticsDashboard from "@/components/AnalyticsDashboard";
 import RecruitsManagement from "@/components/RecruitsManagement";
+import NapReport from "@/components/NapReport";
 import { removeToken, getToken, getUserFromToken } from "@/utils/auth";
 import { useRouter } from "next/navigation";
 
@@ -255,7 +256,7 @@ export default function Dashboard() {
               ))
             ) : isUnitManager() ? (
               // Unit Manager navigation (added recruits for final interviews)
-              ['reports', 'recruits', 'analytics', 'team', 'supervision'].map((tab) => (
+              ['reports', 'recruits', 'nap-report', 'analytics', 'team', 'supervision'].map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
@@ -407,6 +408,7 @@ export default function Dashboard() {
           <>
             {activeTab === 'reports' && <TeamReports />}
             {activeTab === 'recruits' && <RecruitsManagement />}
+            {activeTab === 'nap-report' && <NapReport />}
             {activeTab === 'analytics' && <AnalyticsDashboard />}
             {activeTab === 'team' && <TeamStatus />}
             {activeTab === 'supervision' && <SupervisionManager />}
