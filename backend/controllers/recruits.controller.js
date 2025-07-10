@@ -1,25 +1,103 @@
 const Recruit = require('../models/Recruit.model');
 const User = require('../models/User.model');
+const multer = require('multer');
+const path = require('path');
+
+// Configure multer for file uploads
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, 'uploads/resumes/');
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, 'resume-' + uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const upload = multer({
+  storage: storage,
+  limits: {
+    fileSize: 5 * 1024 * 1024 // 5MB limit
+  },
+  fileFilter: function (req, file, cb) {
+    const allowedTypes = /pdf|doc|docx/;
+    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+    const mimetype = allowedTypes.test(file.mimetype);
+    
+    if (mimetype && extname) {
+      return cb(null, true);
+    } else {
+      cb(new Error('Only PDF, DOC, and DOCX files are allowed'));
+    }
+  }
+});
 
 // Create a new recruit
 exports.createRecruit = async (req, res) => {
   try {
-    const recruit = new Recruit({
+    const recruitData = {
       ...req.body,
       assignedTo: req.user.userId
-    });
+    };
+
+    // If file was uploaded, add the resume URL
+    if (req.file) {
+      recruitData.resumeUrl = req.file.path;
+    }
+
+    const recruit = new Recruit(recruitData);
     await recruit.save();
-    res.status(201).json({ message: 'Recruit created', recruit });
+    
+    const populatedRecruit = await Recruit.findById(recruit._id)
+      .populate('assignedTo', 'name role')
+      .populate('interviewer', 'name role');
+    
+    res.status(201).json({ message: 'Recruit created successfully', recruit: populatedRecruit });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
 
-// Get all recruits
+// Get all recruits (for OJT and staff roles)
 exports.getAllRecruits = async (req, res) => {
   try {
-    const recruits = await Recruit.find().populate('assignedTo', 'name role');
-    res.status(200).json(recruits);
+    // Only allow OJT and staff to see all recruits
+    if (!['ojt', 'staff', 'unit_manager', 'admin'].includes(req.user.role)) {
+      return res.status(403).json({ error: 'Unauthorized' });
+    }
+
+    const { page = 1, limit = 10, status, search } = req.query;
+    const query = {};
+
+    // Filter by status if provided
+    if (status && status !== 'all') {
+      query.applicationStatus = status;
+    }
+
+    // Search functionality
+    if (search) {
+      query.$or = [
+        { fullName: { $regex: search, $options: 'i' } },
+        { email: { $regex: search, $options: 'i' } },
+        { contactNumber: { $regex: search, $options: 'i' } }
+      ];
+    }
+
+    const recruits = await Recruit.find(query)
+      .populate('assignedTo', 'name role')
+      .populate('interviewer', 'name role')
+      .sort({ createdAt: -1 })
+      .limit(limit * 1)
+      .skip((page - 1) * limit);
+
+    const total = await Recruit.countDocuments(query);
+
+    res.status(200).json({
+      recruits,
+      currentPage: page,
+      totalPages: Math.ceil(total / limit),
+      totalRecruits: total
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -28,8 +106,29 @@ exports.getAllRecruits = async (req, res) => {
 // Get recruits assigned to current user
 exports.getMyRecruits = async (req, res) => {
   try {
-    const recruits = await Recruit.find({ assignedTo: req.user.userId });
+    const recruits = await Recruit.find({ assignedTo: req.user.userId })
+      .populate('assignedTo', 'name role')
+      .populate('interviewer', 'name role')
+      .sort({ createdAt: -1 });
+    
     res.status(200).json(recruits);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// Get a single recruit by ID
+exports.getRecruitById = async (req, res) => {
+  try {
+    const recruit = await Recruit.findById(req.params.id)
+      .populate('assignedTo', 'name role')
+      .populate('interviewer', 'name role');
+    
+    if (!recruit) {
+      return res.status(404).json({ message: 'Recruit not found' });
+    }
+    
+    res.status(200).json(recruit);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -38,9 +137,101 @@ exports.getMyRecruits = async (req, res) => {
 // Update recruit
 exports.updateRecruit = async (req, res) => {
   try {
-    const updated = await Recruit.findByIdAndUpdate(req.params.id, req.body, { new: true });
-    if (!updated) return res.status(404).json({ message: 'Recruit not found' });
-    res.status(200).json(updated);
+    const recruitId = req.params.id;
+    const updateData = { ...req.body };
+
+    // If file was uploaded, add the resume URL
+    if (req.file) {
+      updateData.resumeUrl = req.file.path;
+    }
+
+    const updated = await Recruit.findByIdAndUpdate(recruitId, updateData, { new: true })
+      .populate('assignedTo', 'name role')
+      .populate('interviewer', 'name role');
+    
+    if (!updated) {
+      return res.status(404).json({ message: 'Recruit not found' });
+    }
+    
+    res.status(200).json({ message: 'Recruit updated successfully', recruit: updated });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// Schedule interview for a recruit
+exports.scheduleInterview = async (req, res) => {
+  try {
+    const { recruitId } = req.params;
+    const { interviewDate, interviewTime, interviewerId, interviewNotes } = req.body;
+
+    // Validate interviewer exists
+    if (interviewerId) {
+      const interviewer = await User.findById(interviewerId);
+      if (!interviewer) {
+        return res.status(404).json({ message: 'Interviewer not found' });
+      }
+    }
+
+    const updated = await Recruit.findByIdAndUpdate(
+      recruitId,
+      {
+        interviewDate: new Date(interviewDate),
+        interviewTime,
+        interviewer: interviewerId,
+        interviewNotes,
+        applicationStatus: 'Interviewed'
+      },
+      { new: true }
+    )
+    .populate('assignedTo', 'name role')
+    .populate('interviewer', 'name role');
+
+    if (!updated) {
+      return res.status(404).json({ message: 'Recruit not found' });
+    }
+
+    res.status(200).json({ message: 'Interview scheduled successfully', recruit: updated });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// Assign recruit to a user
+exports.assignRecruit = async (req, res) => {
+  try {
+    const { recruitId } = req.params;
+    const { assignedToId } = req.body;
+
+    // Validate assignee exists
+    const assignee = await User.findById(assignedToId);
+    if (!assignee) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const updated = await Recruit.findByIdAndUpdate(
+      recruitId,
+      { assignedTo: assignedToId },
+      { new: true }
+    )
+    .populate('assignedTo', 'name role')
+    .populate('interviewer', 'name role');
+
+    if (!updated) {
+      return res.status(404).json({ message: 'Recruit not found' });
+    }
+
+    res.status(200).json({ message: 'Recruit assigned successfully', recruit: updated });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// Get all users for assignment dropdown
+exports.getAllUsers = async (req, res) => {
+  try {
+    const users = await User.find({}, 'name email role').sort({ name: 1 });
+    res.status(200).json(users);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -50,14 +241,16 @@ exports.updateRecruit = async (req, res) => {
 exports.deleteRecruit = async (req, res) => {
   try {
     const deleted = await Recruit.findByIdAndDelete(req.params.id);
-    if (!deleted) return res.status(404).json({ message: 'Recruit not found' });
+    if (!deleted) {
+      return res.status(404).json({ message: 'Recruit not found' });
+    }
     res.status(200).json({ message: 'Recruit deleted successfully' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
 
-
+// Get team recruits (for managers)
 exports.getTeamRecruits = async (req, res) => {
   try {
     // Find users directly under this manager
@@ -65,9 +258,16 @@ exports.getTeamRecruits = async (req, res) => {
     const teamIds = team.map(user => user._id);
 
     // Find all recruits assigned to that team
-    const recruits = await Recruit.find({ assignedTo: { $in: teamIds } }).populate('assignedTo', 'name role');
+    const recruits = await Recruit.find({ assignedTo: { $in: teamIds } })
+      .populate('assignedTo', 'name role')
+      .populate('interviewer', 'name role')
+      .sort({ createdAt: -1 });
+    
     res.json(recruits);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
+
+// Export the upload middleware
+exports.uploadResume = upload.single('resume');
