@@ -7,6 +7,7 @@ import SupervisionManager from "@/components/SupervisionManager";
 import TeamReports from "@/components/TeamReports";
 import TeamStatus from "@/components/TeamStatus";
 import AnalyticsDashboard from "@/components/AnalyticsDashboard";
+import RecruitsManagement from "@/components/RecruitsManagement";
 import { removeToken, getToken, getUserFromToken } from "@/utils/auth";
 import { useRouter } from "next/navigation";
 
@@ -25,8 +26,10 @@ export default function Dashboard() {
       const userData = getUserFromToken(token);
       setUser(userData);
       // Set default tab based on user role
-      if (userData.role === 'staff' || userData.role === 'intern') {
+      if (userData.role === 'staff') {
         setActiveTab('dtr');
+      } else if (userData.role === 'intern') {
+        setActiveTab('recruits'); // Intern defaults to recruits tab
       } else if (userData.role === 'unit_manager') {
         setActiveTab('reports');
       }
@@ -266,20 +269,35 @@ export default function Dashboard() {
                 </button>
               ))
             ) : (
-              // Staff/Intern navigation (DTR only)
-              ['dtr', 'history'].map((tab) => (
-                <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
-                  className={`py-3 sm:py-4 px-1 border-b-2 font-medium text-xs sm:text-sm capitalize transition-colors whitespace-nowrap ${
-                    activeTab === tab
-                      ? 'border-purple-400 text-purple-400'
-                      : 'border-transparent text-gray-400 hover:text-white hover:border-white/20'
-                  }`}
-                >
-                  {tab === 'dtr' ? 'Time Record' : tab}
-                </button>
-              ))
+              // Staff/Intern navigation (DTR and Recruits for intern and staff)
+              (user?.role === 'intern' || user?.role === 'staff') ? 
+                ['dtr', 'recruits', 'history'].map((tab) => (
+                  <button
+                    key={tab}
+                    onClick={() => setActiveTab(tab)}
+                    className={`py-3 sm:py-4 px-1 border-b-2 font-medium text-xs sm:text-sm capitalize transition-colors whitespace-nowrap ${
+                      activeTab === tab
+                        ? 'border-purple-400 text-purple-400'
+                        : 'border-transparent text-gray-400 hover:text-white hover:border-white/20'
+                    }`}
+                  >
+                    {tab === 'dtr' ? 'Time Record' : tab}
+                  </button>
+                )) :
+                // Other staff/intern roles (DTR only)
+                ['dtr', 'history'].map((tab) => (
+                  <button
+                    key={tab}
+                    onClick={() => setActiveTab(tab)}
+                    className={`py-3 sm:py-4 px-1 border-b-2 font-medium text-xs sm:text-sm capitalize transition-colors whitespace-nowrap ${
+                      activeTab === tab
+                        ? 'border-purple-400 text-purple-400'
+                        : 'border-transparent text-gray-400 hover:text-white hover:border-white/20'
+                    }`}
+                  >
+                    {tab === 'dtr' ? 'Time Record' : tab}
+                  </button>
+                ))
             )}
           </div>
         </div>
@@ -389,11 +407,11 @@ export default function Dashboard() {
             {activeTab === 'analytics' && <AnalyticsDashboard />}
             {activeTab === 'team' && <TeamStatus />}
             {activeTab === 'supervision' && <SupervisionManager />}
-          </>
-        ) : (
+          </>        ) : (
           // Staff/Intern DTR Content
           <>
             {activeTab === 'dtr' && <DTRSystem />}
+            {activeTab === 'recruits' && <RecruitsManagement />}
             {activeTab === 'history' && (
               <div className="group relative">
                 <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-purple-600/20 rounded-xl blur opacity-75 group-hover:opacity-100 transition-opacity"></div>
