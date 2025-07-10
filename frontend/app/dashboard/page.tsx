@@ -254,8 +254,8 @@ export default function Dashboard() {
                 </button>
               ))
             ) : isUnitManager() ? (
-              // Unit Manager navigation
-              ['reports', 'analytics', 'team', 'supervision'].map((tab) => (
+              // Unit Manager navigation (added recruits for final interviews)
+              ['reports', 'recruits', 'analytics', 'team', 'supervision'].map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
@@ -315,14 +315,16 @@ export default function Dashboard() {
                   <div className="absolute inset-0 bg-gradient-to-r from-purple-600/20 to-pink-600/20 rounded-xl blur opacity-75 group-hover:opacity-100 transition-opacity"></div>
                   <div className="relative backdrop-blur-xl bg-white/10 border border-white/20 rounded-xl p-4 sm:p-6 hover:bg-white/15 transition-all duration-300">
                     <div className="flex items-center justify-between mb-3 sm:mb-4">
-                      <h3 className="text-xs sm:text-sm font-medium text-gray-300">{stat.title}</h3>
-                      <div className={`text-xs px-2 py-1 rounded-full ${
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-sm font-medium text-gray-300 mb-2">{stat.title}</h3>
+                        <p className="text-2xl sm:text-3xl font-bold text-white">{stat.value}</p>
+                      </div>
+                      <div className={`text-xs px-3 py-1 rounded-full flex-shrink-0 ml-4 ${
                         stat.positive ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'
                       }`}>
                         {stat.change}
                       </div>
                     </div>
-                    <p className="text-xl sm:text-2xl font-bold text-white">{stat.value}</p>
                   </div>
                 </div>
               ))}
@@ -386,12 +388,12 @@ export default function Dashboard() {
                     ].map((action, index) => (
                       <button
                         key={index}
-                        className="group/btn relative overflow-hidden rounded-xl p-3 sm:p-4 bg-white/5 hover:bg-white/10 border border-white/20 transition-all duration-300 hover:scale-105"
+                        className="group/btn relative overflow-hidden rounded-xl p-4 sm:p-6 bg-white/5 hover:bg-white/10 border border-white/20 transition-all duration-300 hover:scale-105"
                       >
                         <div className={`absolute inset-0 bg-gradient-to-r ${action.color} opacity-0 group-hover/btn:opacity-20 transition-opacity`}></div>
                         <div className="relative text-center">
-                          <div className="text-xl sm:text-2xl mb-1 sm:mb-2">{action.icon}</div>
-                          <div className="text-xs sm:text-sm font-medium text-white">{action.title}</div>
+                          <div className="text-2xl sm:text-3xl mb-2 sm:mb-3">{action.icon}</div>
+                          <div className="text-sm sm:text-base font-medium text-white">{action.title}</div>
                         </div>
                       </button>
                     ))}
@@ -404,10 +406,12 @@ export default function Dashboard() {
           // Unit Manager Dashboard Content
           <>
             {activeTab === 'reports' && <TeamReports />}
+            {activeTab === 'recruits' && <RecruitsManagement />}
             {activeTab === 'analytics' && <AnalyticsDashboard />}
             {activeTab === 'team' && <TeamStatus />}
             {activeTab === 'supervision' && <SupervisionManager />}
-          </>        ) : (
+          </>
+        ) : (
           // Staff/Intern DTR Content
           <>
             {activeTab === 'dtr' && <DTRSystem />}
