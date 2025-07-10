@@ -17,12 +17,12 @@ const RecruitSchema = new mongoose.Schema({
   },
   applicationStatus: { 
     type: String,
-    enum: ['Applied', 'Interviewed', 'Hired', 'Rejected', 'Pending'],
+    enum: ['Applied', 'Interviewed', 'Hired', 'Rejected', 'Pending', 'Pending Final Interview'],
     default: 'Applied'
   },
   resumeUrl: { type: String }, // URL/path to uploaded resume
   
-  // Interview/Schedule information
+  // Legacy Interview/Schedule information (for backward compatibility)
   interviewDate: { type: Date },
   interviewTime: { type: String }, // Format: "HH:MM"
   interviewer: {
@@ -30,6 +30,30 @@ const RecruitSchema = new mongoose.Schema({
     ref: 'User'
   },
   interviewNotes: { type: String },
+  
+  // Step 1 Interview (by intern/staff)
+  initialInterviewDate: { type: Date },
+  initialInterviewTime: { type: String },
+  initialInterviewer: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  },
+  initialInterviewNotes: { type: String },
+  initialInterviewCompleted: { type: Boolean, default: false },
+  
+  // Step 2 Interview (by unit manager)
+  finalInterviewDate: { type: Date },
+  finalInterviewTime: { type: String },
+  finalInterviewer: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  },
+  finalInterviewNotes: { type: String },
+  finalInterviewCompleted: { type: Boolean, default: false },
+  finalInterviewAssignedTo: { // Which unit manager is assigned to handle the final interview
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  },
   
   // Assignment information
   assignedTo: {  // Who owns this recruit record
