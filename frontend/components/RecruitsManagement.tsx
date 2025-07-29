@@ -735,25 +735,13 @@ export default function RecruitsManagement() {
                               )}
                               
                               {recruit.resumeUrl && (
-                                <div className="flex space-x-1">
-                                  <button
-                                    onClick={() => handleResumePreview(recruit)}
-                                    className="px-2 py-1 bg-green-500/20 text-green-400 rounded-lg hover:bg-green-500/30 transition-colors text-xs"
-                                    title="Opens resume via backend (with Cloudinary optimizations)"
-                                  >
-                                    📄 Resume
-                                  </button>
-                                  <button
-                                    onClick={() => {
-                                      console.log('Direct link clicked for URL:', recruit.resumeUrl);
-                                      window.open(recruit.resumeUrl, '_blank', 'noopener,noreferrer');
-                                    }}
-                                    className="px-2 py-1 bg-blue-500/20 text-blue-400 rounded-lg hover:bg-blue-500/30 transition-colors text-xs"
-                                    title="Opens resume directly from Cloudinary"
-                                  >
-                                    🔗 Direct
-                                  </button>
-                                </div>
+                                <button
+                                  onClick={() => handleResumePreview(recruit)}
+                                  className="px-3 py-1 bg-green-500/20 text-green-400 rounded-lg hover:bg-green-500/30 transition-colors text-sm"
+                                  title="Opens resume in new tab"
+                                >
+                                  📄 Open Resume
+                                </button>
                               )}
                             </div>
                             
