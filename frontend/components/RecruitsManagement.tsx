@@ -104,7 +104,7 @@ export default function RecruitsManagement() {
       const token = getToken();
       if (!token) return;
 
-      const response = await fetch(`${API_BASE_URL}/api/recruits/${recruit._id}/preview-resume`, {
+      const response = await fetch(`${API_BASE_URL}/recruits/${recruit._id}/preview-resume`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -213,6 +213,13 @@ export default function RecruitsManagement() {
     try {
       const token = getToken();
       if (!token) return;
+
+      // Only fetch unit managers if the current user is intern or staff
+      const user = getUserFromToken(token);
+      if (!user || !['intern', 'staff'].includes(user.role)) {
+        console.log('Skipping unit managers fetch - user role:', user?.role);
+        return;
+      }
 
       const response = await fetch(`${API_BASE_URL}/recruits/unit-managers`, {
         headers: {
