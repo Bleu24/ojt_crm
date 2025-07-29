@@ -526,23 +526,18 @@ exports.previewResume = async (req, res) => {
       return res.status(403).json({ error: 'Unauthorized' });
     }
 
-    // Return the direct Cloudinary URL for opening in new tab
+    // Use the clean Cloudinary URL format for direct access
     let previewUrl = recruit.resumeUrl;
 
-    // For Cloudinary URLs, we can optionally add transformations to force inline viewing
+    // For Cloudinary URLs, ensure we use the simple format without transformation flags
     if (recruit.resumeUrl.includes('cloudinary.com')) {
-      // For raw files, add flags to ensure proper viewing
-      if (recruit.resumeUrl.includes('/raw/upload/')) {
-        // Add transformation flags to enable inline viewing and set proper content disposition
-        previewUrl = recruit.resumeUrl.replace(
-          '/raw/upload/', 
-          '/raw/upload/fl_attachment:false,fl_inline:true/'
-        );
-      }
+      // Keep the original URL format: https://res.cloudinary.com/di99wgabr/raw/upload/v1753793424/crm/resumes/resume-1753793422742-979527016.pdf
+      // No transformations needed - use direct URL
+      previewUrl = recruit.resumeUrl;
     }
 
     console.log('Original URL:', recruit.resumeUrl);
-    console.log('Preview URL:', previewUrl);
+    console.log('Preview URL (clean format):', previewUrl);
 
     // Detect file type for reference
     let fileType = 'pdf';
