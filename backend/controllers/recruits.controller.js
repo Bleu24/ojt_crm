@@ -469,4 +469,4 @@ exports.getTeamRecruits = async (req, res) => {
 };
 
 // Export the upload middleware
-exports.uploadResume = upload.single('resume');
+exports.uploadResume = exports.upload;
