@@ -1,3 +1,6 @@
 node_modules/
 .env
 /uploads
+migrate-to-cloudinary.js
+cleanup-uploads.js
+upload-test.js
