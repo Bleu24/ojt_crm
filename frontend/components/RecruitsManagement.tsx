@@ -112,6 +112,7 @@ export default function RecruitsManagement() {
 
       if (response.ok) {
         const data = await response.json();
+        // Use the optimized preview URL from the backend
         setPreviewResumeUrl(data.previewUrl);
         setSelectedRecruit(recruit);
         setShowResumePreview(true);
@@ -453,8 +454,8 @@ export default function RecruitsManagement() {
   const getAvailableInterviewType = (recruit: Recruit, userRole: string) => {
     const currentUser = getCurrentUser();
     
-    // If initial interview not completed, intern/staff/unit_manager can schedule initial
-    if (!recruit.initialInterviewCompleted && ['intern', 'staff', 'unit_manager'].includes(userRole)) {
+    // If initial interview not completed, only intern/staff can schedule initial
+    if (!recruit.initialInterviewCompleted && ['intern', 'staff'].includes(userRole)) {
       return 'initial';
     }
     // If initial completed but final not scheduled/completed, only assigned unit_manager can schedule final
@@ -720,7 +721,7 @@ export default function RecruitsManagement() {
                             
                             {/* Complete Interview Buttons */}
                             {(recruit.initialInterviewDate && !recruit.initialInterviewCompleted && 
-                              ['intern', 'staff', 'unit_manager'].includes(currentUser?.role || '')) && (
+                              ['intern', 'staff'].includes(currentUser?.role || '')) && (
                               <div className="flex space-x-1">
                                 <button
                                   onClick={() => {
