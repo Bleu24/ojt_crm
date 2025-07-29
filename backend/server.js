@@ -34,7 +34,7 @@ app.use(cors({
     return callback(new Error(msg), false);
   },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
   preflightContinue: false,
   optionsSuccessStatus: 200
@@ -51,6 +51,21 @@ const napReportRoutes = require('./routes/napReport.routes');
 
 // Middlewares (Routes)
 app.use(express.json());
+
+// Additional CORS headers for complex requests
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,PATCH,OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Origin,X-Requested-With,Content-Type,Accept,Authorization');
+  
+  // Handle preflight requests
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return;
+  }
+  
+  next();
+});
 
 // Note: Static file serving removed - now using Cloudinary for file storage
 
