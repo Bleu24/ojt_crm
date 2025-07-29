@@ -129,7 +129,9 @@ const uploadToCloudinary = (folder, resourceType = 'raw') => {
         public_id: publicId,
         resource_type: resourceType,
         use_filename: false, // Don't use original filename
-        unique_filename: false // Use our custom public_id
+        unique_filename: false, // Use our custom public_id
+        access_mode: 'public', // Ensure public access
+        type: 'upload' // Explicitly set upload type
       };
 
       console.log('Uploading to Cloudinary with options:', uploadOptions);

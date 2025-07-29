@@ -97,36 +97,56 @@ export default function RecruitsManagement() {
 
   // Handle resume preview - open in new tab
   const handleResumePreview = async (recruit: Recruit) => {
+    console.log('Attempting to preview resume for recruit:', recruit.fullName);
+    console.log('Resume URL:', recruit.resumeUrl);
+    
+    // If no resumeUrl, show alert and return
+    if (!recruit.resumeUrl) {
+      alert('No resume file found for this recruit');
+      return;
+    }
+
     try {
       const token = getToken();
-      if (!token) return;
+      if (!token) {
+        console.log('No token found, opening URL directly');
+        window.open(recruit.resumeUrl, '_blank', 'noopener,noreferrer');
+        return;
+      }
 
+      console.log('Fetching preview URL from backend...');
       const response = await fetch(`${API_BASE_URL}/recruits/${recruit._id}/resume/preview`, {
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         }
       });
 
+      console.log('Backend response status:', response.status);
+
       if (response.ok) {
         const data = await response.json();
-        // Open the preview URL directly in a new tab
-        window.open(data.previewUrl, '_blank', 'noopener,noreferrer');
+        console.log('Backend response data:', data);
+        
+        // Try the preview URL first, then fall back to original
+        const urlToOpen = data.previewUrl || data.originalUrl || recruit.resumeUrl;
+        console.log('Opening URL:', urlToOpen);
+        
+        window.open(urlToOpen, '_blank', 'noopener,noreferrer');
       } else {
-        // Fallback: try to open the original resume URL
-        if (recruit.resumeUrl) {
-          window.open(recruit.resumeUrl, '_blank', 'noopener,noreferrer');
-        } else {
-          alert('Unable to preview resume');
-        }
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Backend error:', response.status, errorData);
+        
+        // Fallback: try to open the original resume URL directly
+        console.log('Falling back to direct URL:', recruit.resumeUrl);
+        window.open(recruit.resumeUrl, '_blank', 'noopener,noreferrer');
       }
     } catch (error) {
       console.error('Error previewing resume:', error);
-      // Fallback: try to open the original resume URL
-      if (recruit.resumeUrl) {
-        window.open(recruit.resumeUrl, '_blank', 'noopener,noreferrer');
-      } else {
-        alert('Error loading resume preview');
-      }
+      
+      // Final fallback: try to open the original resume URL
+      console.log('Final fallback to direct URL:', recruit.resumeUrl);
+      window.open(recruit.resumeUrl, '_blank', 'noopener,noreferrer');
     }
   };
 
@@ -715,13 +735,25 @@ export default function RecruitsManagement() {
                               )}
                               
                               {recruit.resumeUrl && (
-                                <button
-                                  onClick={() => handleResumePreview(recruit)}
-                                  className="px-3 py-1 bg-green-500/20 text-green-400 rounded-lg hover:bg-green-500/30 transition-colors text-sm"
-                                  title="Opens resume in new tab"
-                                >
-                                  📄 Open Resume
-                                </button>
+                                <div className="flex space-x-1">
+                                  <button
+                                    onClick={() => handleResumePreview(recruit)}
+                                    className="px-2 py-1 bg-green-500/20 text-green-400 rounded-lg hover:bg-green-500/30 transition-colors text-xs"
+                                    title="Opens resume via backend (with Cloudinary optimizations)"
+                                  >
+                                    📄 Resume
+                                  </button>
+                                  <button
+                                    onClick={() => {
+                                      console.log('Direct link clicked for URL:', recruit.resumeUrl);
+                                      window.open(recruit.resumeUrl, '_blank', 'noopener,noreferrer');
+                                    }}
+                                    className="px-2 py-1 bg-blue-500/20 text-blue-400 rounded-lg hover:bg-blue-500/30 transition-colors text-xs"
+                                    title="Opens resume directly from Cloudinary"
+                                  >
+                                    🔗 Direct
+                                  </button>
+                                </div>
                               )}
                             </div>
                             

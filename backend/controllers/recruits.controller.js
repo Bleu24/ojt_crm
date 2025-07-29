@@ -529,17 +529,20 @@ exports.previewResume = async (req, res) => {
     // Return the direct Cloudinary URL for opening in new tab
     let previewUrl = recruit.resumeUrl;
 
-    // For Cloudinary URLs, we can optionally add the fl_attachment:false flag
-    // but it's not strictly necessary for new tab opening
+    // For Cloudinary URLs, we can optionally add transformations to force inline viewing
     if (recruit.resumeUrl.includes('cloudinary.com')) {
-      // Check if it's a raw file upload (PDFs, DOCs, etc.)
+      // For raw files, add flags to ensure proper viewing
       if (recruit.resumeUrl.includes('/raw/upload/')) {
-        // For raw files, add fl_attachment:false to enable inline viewing in browser
-        previewUrl = recruit.resumeUrl.replace('/raw/upload/', '/raw/upload/fl_attachment:false/');
+        // Add transformation flags to enable inline viewing and set proper content disposition
+        previewUrl = recruit.resumeUrl.replace(
+          '/raw/upload/', 
+          '/raw/upload/fl_attachment:false,fl_inline:true/'
+        );
       }
     }
 
-    console.log('Opening resume in new tab:', previewUrl);
+    console.log('Original URL:', recruit.resumeUrl);
+    console.log('Preview URL:', previewUrl);
 
     // Detect file type for reference
     let fileType = 'pdf';
