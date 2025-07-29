@@ -674,7 +674,7 @@ export default function RecruitsManagement() {
                               
                               {recruit.resumeUrl && (
                                 <a
-                                  href={`${API_BASE_URL}/${recruit.resumeUrl}`}
+                                  href={recruit.resumeUrl.startsWith('http') ? recruit.resumeUrl : `${API_BASE_URL}/${recruit.resumeUrl}`}
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   className="px-3 py-1 bg-green-500/20 text-green-400 rounded-lg hover:bg-green-500/30 transition-colors text-sm"

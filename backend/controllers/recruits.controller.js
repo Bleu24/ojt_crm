@@ -51,9 +51,16 @@ exports.getAllRecruits = async (req, res) => {
       query.applicationStatus = status;
     }
 
-    // For unit managers, only show recruits assigned to them for final interview
+    // For unit managers, show recruits assigned to them for final interview OR recruits from their team
     if (req.user.role === 'unit_manager') {
-      query.finalInterviewAssignedTo = req.user.userId;
+      // Find users directly under this manager
+      const team = await User.find({ supervisorId: req.user.userId }).select('_id');
+      const teamIds = team.map(user => user._id);
+      
+      query.$or = [
+        { finalInterviewAssignedTo: req.user.userId }, // Recruits assigned for final interview
+        { assignedTo: { $in: teamIds } } // Recruits assigned to team members
+      ];
     }
 
     // Search functionality
