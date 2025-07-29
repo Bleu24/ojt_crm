@@ -1,5 +1,6 @@
 const Recruit = require('../models/Recruit.model');
 const User = require('../models/User.model');
+const axios = require('axios');
 const { resumeUpload, uploadToCloudinary, deleteFromCloudinary, extractPublicId } = require('../utils/cloudinary');
 
 // Configure multer for file uploads using Cloudinary
@@ -29,7 +30,12 @@ exports.createRecruit = async (req, res) => {
       .populate('assignedTo', 'name role')
       .populate('interviewer', 'name role');
     
-    res.status(201).json({ message: 'Recruit created successfully', recruit: populatedRecruit });
+    // Different message for unit managers
+    const message = req.user.role === 'unit_manager' 
+      ? 'Recruit added successfully! Please wait for interns to schedule the initial interview.'
+      : 'Recruit created successfully';
+    
+    res.status(201).json({ message, recruit: populatedRecruit });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -226,15 +232,15 @@ exports.scheduleInterview = async (req, res) => {
   }
 };
 
-// Schedule initial interview (Step 1 - by intern/staff/unit_manager)
+// Schedule initial interview (Step 1 - by intern/staff only)
 exports.scheduleInitialInterview = async (req, res) => {
   try {
     const { recruitId } = req.params;
     const { interviewDate, interviewTime, interviewerId, interviewNotes } = req.body;
 
-    // Allow intern, staff, and unit_manager to schedule initial interviews
-    if (!['intern', 'staff', 'unit_manager'].includes(req.user.role)) {
-      return res.status(403).json({ error: 'Only intern, staff, and unit managers can schedule initial interviews' });
+    // Only allow intern and staff to schedule initial interviews
+    if (!['intern', 'staff'].includes(req.user.role)) {
+      return res.status(403).json({ error: 'Only intern and staff can schedule initial interviews' });
     }
 
     // Validate interviewer exists
@@ -276,9 +282,9 @@ exports.completeInitialInterview = async (req, res) => {
     const { recruitId } = req.params;
     const { notes, passed, finalInterviewAssignedTo } = req.body;
 
-    // Allow intern, staff, and unit_manager to complete initial interviews
-    if (!['intern', 'staff', 'unit_manager'].includes(req.user.role)) {
-      return res.status(403).json({ error: 'Only intern, staff, and unit managers can complete initial interviews' });
+    // Only allow intern and staff to complete initial interviews
+    if (!['intern', 'staff'].includes(req.user.role)) {
+      return res.status(403).json({ error: 'Only intern and staff can complete initial interviews' });
     }
 
     const updateData = {
@@ -573,8 +579,6 @@ exports.proxyResume = async (req, res) => {
 
     // For Cloudinary URLs, fetch and proxy the file
     if (recruit.resumeUrl.includes('cloudinary.com')) {
-      const axios = require('axios');
-      
       try {
         const response = await axios.get(recruit.resumeUrl, {
           responseType: 'stream',
