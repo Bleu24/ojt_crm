@@ -1,6 +1,6 @@
 const cloudinary = require('cloudinary').v2;
-const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const multer = require('multer');
+const streamifier = require('streamifier');
 
 // Configure Cloudinary
 cloudinary.config({
@@ -9,13 +9,51 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
+// Custom Cloudinary storage engine for multer
+class CloudinaryStorage {
+  constructor(options) {
+    this.options = options;
+  }
+
+  _handleFile(req, file, cb) {
+    const uploadOptions = {
+      folder: this.options.params.folder,
+      resource_type: this.options.params.resource_type || 'raw',
+      public_id: this.options.params.public_id ? this.options.params.public_id(req, file) : undefined,
+      allowed_formats: this.options.params.allowed_formats
+    };
+
+    const uploadStream = cloudinary.uploader.upload_stream(
+      uploadOptions,
+      (error, result) => {
+        if (error) {
+          cb(error);
+        } else {
+          cb(null, {
+            path: result.secure_url,
+            filename: result.public_id,
+            originalname: file.originalname,
+            mimetype: file.mimetype,
+            size: result.bytes
+          });
+        }
+      }
+    );
+
+    streamifier.createReadStream(file.buffer).pipe(uploadStream);
+  }
+
+  _removeFile(req, file, cb) {
+    cloudinary.uploader.destroy(file.filename, { resource_type: 'raw' }, cb);
+  }
+}
+
 // Cloudinary storage for NAP reports (PDFs)
 const napReportStorage = new CloudinaryStorage({
-  cloudinary: cloudinary,
   params: {
     folder: 'crm/nap-reports',
     allowed_formats: ['pdf'],
-    resource_type: 'raw', // For non-image files like PDFs
+    resource_type: 'raw',
     public_id: (req, file) => {
       const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
       return `nap-report-${uniqueSuffix}`;
@@ -25,11 +63,10 @@ const napReportStorage = new CloudinaryStorage({
 
 // Cloudinary storage for resumes
 const resumeStorage = new CloudinaryStorage({
-  cloudinary: cloudinary,
   params: {
     folder: 'crm/resumes',
     allowed_formats: ['pdf', 'doc', 'docx'],
-    resource_type: 'raw', // For non-image files
+    resource_type: 'raw',
     public_id: (req, file) => {
       const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
       return `resume-${uniqueSuffix}`;
@@ -37,9 +74,9 @@ const resumeStorage = new CloudinaryStorage({
   }
 });
 
-// Multer upload configurations
+// Multer upload configurations with memory storage (required for custom storage)
 const napReportUpload = multer({
-  storage: napReportStorage,
+  storage: multer.memoryStorage(),
   limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
   fileFilter: function (req, file, cb) {
     const allowed = /pdf/;
@@ -53,7 +90,7 @@ const napReportUpload = multer({
 });
 
 const resumeUpload = multer({
-  storage: resumeStorage,
+  storage: multer.memoryStorage(),
   limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
   fileFilter: function (req, file, cb) {
     const allowedTypes = /pdf|doc|docx/;
@@ -68,21 +105,49 @@ const resumeUpload = multer({
   }
 });
 
-// Helper functions
-const uploadToCloudinary = async (buffer, options = {}) => {
-  return new Promise((resolve, reject) => {
-    const uploadOptions = {
-      resource_type: 'raw',
-      ...options
-    };
-    
-    cloudinary.uploader.upload_stream(uploadOptions, (error, result) => {
-      if (error) reject(error);
-      else resolve(result);
-    }).end(buffer);
-  });
+// Custom middleware to handle Cloudinary upload after multer
+const uploadToCloudinary = (folder, resourceType = 'raw') => {
+  return async (req, res, next) => {
+    if (!req.file) {
+      return next();
+    }
+
+    try {
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+      const publicId = folder === 'crm/nap-reports' 
+        ? `nap-report-${uniqueSuffix}`
+        : `resume-${uniqueSuffix}`;
+
+      const uploadOptions = {
+        folder: folder,
+        public_id: publicId,
+        resource_type: resourceType
+      };
+
+      const result = await new Promise((resolve, reject) => {
+        const uploadStream = cloudinary.uploader.upload_stream(
+          uploadOptions,
+          (error, result) => {
+            if (error) reject(error);
+            else resolve(result);
+          }
+        );
+        streamifier.createReadStream(req.file.buffer).pipe(uploadStream);
+      });
+
+      // Update req.file with Cloudinary info
+      req.file.path = result.secure_url;
+      req.file.filename = result.public_id;
+      req.file.cloudinary = result;
+
+      next();
+    } catch (error) {
+      next(error);
+    }
+  };
 };
 
+// Helper functions
 const deleteFromCloudinary = async (publicId, resourceType = 'raw') => {
   try {
     const result = await cloudinary.uploader.destroy(publicId, { resource_type: resourceType });
