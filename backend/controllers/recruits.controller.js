@@ -544,23 +544,29 @@ exports.previewResume = async (req, res) => {
     console.log('Original URL:', recruit.resumeUrl);
     console.log('Preview URL:', previewUrl);
 
-    // Better file type detection
+    // Better file type detection from the URL
     let fileType = 'unknown';
     if (recruit.resumeUrl) {
-      // Extract file extension from URL
-      const urlParts = recruit.resumeUrl.split('.');
+      // First try to extract from the actual URL path
+      const urlPath = recruit.resumeUrl.split('/').pop() || '';
+      const urlParts = urlPath.split('.');
+      
       if (urlParts.length > 1) {
         fileType = urlParts[urlParts.length - 1].toLowerCase();
         // Remove any query parameters
         fileType = fileType.split('?')[0];
       }
+      
       // If still unknown, try to detect from Cloudinary URL patterns
       if (fileType === 'unknown' || fileType === '') {
         if (recruit.resumeUrl.includes('.pdf')) fileType = 'pdf';
-        else if (recruit.resumeUrl.includes('.doc')) fileType = 'doc';
+        else if (recruit.resumeUrl.includes('.doc') && !recruit.resumeUrl.includes('.docx')) fileType = 'doc';
         else if (recruit.resumeUrl.includes('.docx')) fileType = 'docx';
+        else fileType = 'pdf'; // Default to PDF for resume files
       }
     }
+
+    console.log('Detected file type:', fileType);
 
     return res.json({ 
       previewUrl: previewUrl,
@@ -598,22 +604,50 @@ exports.proxyResume = async (req, res) => {
     // For Cloudinary URLs, fetch and proxy the file
     if (recruit.resumeUrl.includes('cloudinary.com')) {
       try {
-        // Detect file type from URL
+        // Better file type detection from URL
         let fileType = 'pdf';
         let contentType = 'application/pdf';
         let filename = `${recruit.fullName || 'resume'}-resume`;
         
-        if (recruit.resumeUrl.includes('.doc')) {
-          fileType = 'doc';
-          contentType = 'application/msword';
-          filename += '.doc';
-        } else if (recruit.resumeUrl.includes('.docx')) {
-          fileType = 'docx';
-          contentType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
-          filename += '.docx';
+        // Extract file extension from the URL path
+        const urlPath = recruit.resumeUrl.split('/').pop() || '';
+        const urlParts = urlPath.split('.');
+        
+        if (urlParts.length > 1) {
+          const detectedType = urlParts[urlParts.length - 1].toLowerCase().split('?')[0];
+          
+          if (detectedType === 'doc') {
+            fileType = 'doc';
+            contentType = 'application/msword';
+            filename += '.doc';
+          } else if (detectedType === 'docx') {
+            fileType = 'docx';
+            contentType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+            filename += '.docx';
+          } else if (detectedType === 'pdf') {
+            fileType = 'pdf';
+            contentType = 'application/pdf';
+            filename += '.pdf';
+          } else {
+            // Default to PDF
+            filename += '.pdf';
+          }
         } else {
-          filename += '.pdf';
+          // Fallback detection for older uploads without extensions
+          if (recruit.resumeUrl.includes('.doc') && !recruit.resumeUrl.includes('.docx')) {
+            fileType = 'doc';
+            contentType = 'application/msword';
+            filename += '.doc';
+          } else if (recruit.resumeUrl.includes('.docx')) {
+            fileType = 'docx';
+            contentType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+            filename += '.docx';
+          } else {
+            filename += '.pdf';
+          }
         }
+
+        console.log('Proxy - File type detected:', fileType, 'Content-Type:', contentType, 'Filename:', filename);
 
         const response = await axios.get(recruit.resumeUrl, {
           responseType: 'stream',
