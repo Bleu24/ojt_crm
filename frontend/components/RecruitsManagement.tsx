@@ -104,7 +104,7 @@ export default function RecruitsManagement() {
       const token = getToken();
       if (!token) return;
 
-      const response = await fetch(`${API_BASE_URL}/recruits/${recruit._id}/preview-resume`, {
+      const response = await fetch(`${API_BASE_URL}/recruits/${recruit._id}/resume/preview`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -453,8 +453,8 @@ export default function RecruitsManagement() {
   const getAvailableInterviewType = (recruit: Recruit, userRole: string) => {
     const currentUser = getCurrentUser();
     
-    // If initial interview not completed, only intern/staff can schedule initial
-    if (!recruit.initialInterviewCompleted && ['intern', 'staff'].includes(userRole)) {
+    // If initial interview not completed, intern/staff/unit_manager can schedule initial
+    if (!recruit.initialInterviewCompleted && ['intern', 'staff', 'unit_manager'].includes(userRole)) {
       return 'initial';
     }
     // If initial completed but final not scheduled/completed, only assigned unit_manager can schedule final
@@ -720,7 +720,7 @@ export default function RecruitsManagement() {
                             
                             {/* Complete Interview Buttons */}
                             {(recruit.initialInterviewDate && !recruit.initialInterviewCompleted && 
-                              ['intern', 'staff'].includes(currentUser?.role || '')) && (
+                              ['intern', 'staff', 'unit_manager'].includes(currentUser?.role || '')) && (
                               <div className="flex space-x-1">
                                 <button
                                   onClick={() => {
