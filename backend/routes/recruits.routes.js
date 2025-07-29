@@ -25,6 +25,9 @@ router.get('/', authenticateToken, requireRole(['intern', 'staff', 'unit_manager
 // Get single recruit by ID
 router.get('/:id', authenticateToken, requireRole(['intern', 'staff', 'unit_manager', 'branch_manager', 'admin']), recruitController.getRecruitById);
 
+// Preview resume for a recruit
+router.get('/:id/resume/preview', authenticateToken, requireRole(['intern', 'staff', 'unit_manager', 'branch_manager', 'admin']), recruitController.previewResume);
+
 // Schedule interview for a recruit
 router.put('/:recruitId/schedule', authenticateToken, requireRole(['intern', 'staff', 'unit_manager', 'branch_manager', 'admin']), recruitController.scheduleInterview);
 
