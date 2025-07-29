@@ -6,8 +6,12 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
+    "build": "echo 'No build step required for Node.js'",
     "test": "jest",
-    "ngrok": "ngrok http 5000"
+    "lint": "echo 'Add linting if needed'",
+    "ngrok": "ngrok http 5000",
+    "seed": "node scripts/seed.js",
+    "migrate": "node scripts/migrate.js"
   },
   "keywords": [],
   "author": "",
