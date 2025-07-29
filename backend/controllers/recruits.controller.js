@@ -225,15 +225,15 @@ exports.scheduleInterview = async (req, res) => {
   }
 };
 
-// Schedule initial interview (Step 1 - by intern/staff)
+// Schedule initial interview (Step 1 - by intern/staff/unit_manager)
 exports.scheduleInitialInterview = async (req, res) => {
   try {
     const { recruitId } = req.params;
     const { interviewDate, interviewTime, interviewerId, interviewNotes } = req.body;
 
-    // Only intern and staff can schedule initial interviews
-    if (!['intern', 'staff'].includes(req.user.role)) {
-      return res.status(403).json({ error: 'Only intern and staff can schedule initial interviews' });
+    // Allow intern, staff, and unit_manager to schedule initial interviews
+    if (!['intern', 'staff', 'unit_manager'].includes(req.user.role)) {
+      return res.status(403).json({ error: 'Only intern, staff, and unit managers can schedule initial interviews' });
     }
 
     // Validate interviewer exists
@@ -275,9 +275,9 @@ exports.completeInitialInterview = async (req, res) => {
     const { recruitId } = req.params;
     const { notes, passed, finalInterviewAssignedTo } = req.body;
 
-    // Only intern and staff can complete initial interviews
-    if (!['intern', 'staff'].includes(req.user.role)) {
-      return res.status(403).json({ error: 'Only intern and staff can complete initial interviews' });
+    // Allow intern, staff, and unit_manager to complete initial interviews
+    if (!['intern', 'staff', 'unit_manager'].includes(req.user.role)) {
+      return res.status(403).json({ error: 'Only intern, staff, and unit managers can complete initial interviews' });
     }
 
     const updateData = {
@@ -523,16 +523,11 @@ exports.previewResume = async (req, res) => {
     if (recruit.resumeUrl.includes('cloudinary.com')) {
       // Add flag to display inline instead of download
       const previewUrl = recruit.resumeUrl.replace('/upload/', '/upload/fl_attachment:false/');
-      return res.redirect(previewUrl);
+      return res.json({ previewUrl });
     }
 
-    // For local files (legacy), serve with inline headers
-    res.set({
-      'Content-Type': 'application/pdf',
-      'Content-Disposition': 'inline; filename="resume.pdf"'
-    });
-    
-    return res.redirect(recruit.resumeUrl);
+    // For local files (legacy), return the URL directly
+    return res.json({ previewUrl: recruit.resumeUrl });
 
   } catch (error) {
     console.error('Error previewing resume:', error);
