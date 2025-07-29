@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { X, Download, ExternalLink } from 'lucide-react';
+import { API_BASE_URL } from '@/config/api';
 
 interface ResumePreviewModalProps {
   isOpen: boolean;
@@ -18,15 +19,19 @@ export default function ResumePreviewModal({
 }: ResumePreviewModalProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [previewError, setPreviewError] = useState(false);
+  const [useProxy, setUseProxy] = useState(false);
 
   if (!isOpen) return null;
 
-  // Convert URL for inline viewing
+  // Convert URL for inline viewing - backend now handles this, so we use the URL as-is
   const getPreviewUrl = (url: string) => {
-    if (url.includes('cloudinary.com')) {
-      // Add flags for inline display and better PDF rendering
-      return url.replace('/upload/', '/upload/fl_attachment:false/');
+    // If we need to use proxy due to CORS or other issues
+    if (useProxy && recruitId) {
+      return `${API_BASE_URL}/recruits/${recruitId}/resume/proxy`;
     }
+    
+    // The backend preview endpoint already optimizes Cloudinary URLs
+    // Just return the URL as provided
     return url;
   };
 
@@ -34,12 +39,25 @@ export default function ResumePreviewModal({
 
   // Handle iframe load error
   const handleIframeError = () => {
+    console.error('Resume preview failed to load:', resumeUrl);
+    
+    // If we're not already using proxy, try the proxy endpoint
+    if (!useProxy) {
+      console.log('Attempting to use proxy endpoint...');
+      setUseProxy(true);
+      setIsLoading(true);
+      setPreviewError(false);
+      return;
+    }
+    
+    // If proxy also failed, show error
     setPreviewError(true);
     setIsLoading(false);
   };
 
   // Handle iframe load success
   const handleIframeLoad = () => {
+    console.log('Resume preview loaded successfully:', resumeUrl);
     setIsLoading(false);
     setPreviewError(false);
   };
