@@ -12,7 +12,10 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const napReports = {};
 
 // Configure multer for PDF uploads using Cloudinary
-exports.uploadPdf = napReportUpload.single('pdfFile');
+exports.uploadPdf = [
+  napReportUpload.single('pdfFile'),
+  uploadToCloudinary('crm/nap-reports', 'raw')
+];
 
 /**
  * Send text to Gemini API for intelligent parsing of NAP reports
