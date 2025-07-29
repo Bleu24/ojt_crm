@@ -20,7 +20,8 @@ const RecruitSchema = new mongoose.Schema({
     enum: ['Applied', 'Interviewed', 'Hired', 'Rejected', 'Pending', 'Pending Final Interview'],
     default: 'Applied'
   },
-  resumeUrl: { type: String }, // URL/path to uploaded resume
+  resumeUrl: { type: String }, // URL/path to uploaded resume (now Cloudinary URL)
+  resumeCloudinaryId: { type: String }, // Cloudinary public ID for deletion
   
   // Legacy Interview/Schedule information (for backward compatibility)
   interviewDate: { type: Date },
