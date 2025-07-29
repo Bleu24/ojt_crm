@@ -56,7 +56,8 @@ const napReportStorage = new CloudinaryStorage({
     resource_type: 'raw',
     public_id: (req, file) => {
       const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-      return `nap-report-${uniqueSuffix}`;
+      const fileExtension = file.originalname.split('.').pop().toLowerCase();
+      return `nap-report-${uniqueSuffix}.${fileExtension}`;
     }
   }
 });
@@ -69,7 +70,8 @@ const resumeStorage = new CloudinaryStorage({
     resource_type: 'raw',
     public_id: (req, file) => {
       const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-      return `resume-${uniqueSuffix}`;
+      const fileExtension = file.originalname.split('.').pop().toLowerCase();
+      return `resume-${uniqueSuffix}.${fileExtension}`;
     }
   }
 });
@@ -113,23 +115,36 @@ const uploadToCloudinary = (folder, resourceType = 'raw') => {
     }
 
     try {
+      // Extract file extension from original filename
+      const fileExtension = req.file.originalname.split('.').pop().toLowerCase();
       const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+      
+      // Include file extension in public_id for proper file handling
       const publicId = folder === 'crm/nap-reports' 
-        ? `nap-report-${uniqueSuffix}`
-        : `resume-${uniqueSuffix}`;
+        ? `nap-report-${uniqueSuffix}.${fileExtension}`
+        : `resume-${uniqueSuffix}.${fileExtension}`;
 
       const uploadOptions = {
         folder: folder,
         public_id: publicId,
-        resource_type: resourceType
+        resource_type: resourceType,
+        use_filename: false, // Don't use original filename
+        unique_filename: false // Use our custom public_id
       };
+
+      console.log('Uploading to Cloudinary with options:', uploadOptions);
 
       const result = await new Promise((resolve, reject) => {
         const uploadStream = cloudinary.uploader.upload_stream(
           uploadOptions,
           (error, result) => {
-            if (error) reject(error);
-            else resolve(result);
+            if (error) {
+              console.error('Cloudinary upload error:', error);
+              reject(error);
+            } else {
+              console.log('Cloudinary upload successful:', result.secure_url);
+              resolve(result);
+            }
           }
         );
         streamifier.createReadStream(req.file.buffer).pipe(uploadStream);
@@ -142,6 +157,7 @@ const uploadToCloudinary = (folder, resourceType = 'raw') => {
 
       next();
     } catch (error) {
+      console.error('Error in uploadToCloudinary middleware:', error);
       next(error);
     }
   };
