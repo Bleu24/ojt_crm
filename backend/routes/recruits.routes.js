@@ -28,15 +28,18 @@ router.get('/:id', authenticateToken, requireRole(['intern', 'staff', 'unit_mana
 // Preview resume for a recruit
 router.get('/:id/resume/preview', authenticateToken, requireRole(['intern', 'staff', 'unit_manager', 'branch_manager', 'admin']), recruitController.previewResume);
 
+// Proxy resume file with proper headers
+router.get('/:id/resume/proxy', authenticateToken, requireRole(['intern', 'staff', 'unit_manager', 'branch_manager', 'admin']), recruitController.proxyResume);
+
 // Schedule interview for a recruit
 router.put('/:recruitId/schedule', authenticateToken, requireRole(['intern', 'staff', 'unit_manager', 'branch_manager', 'admin']), recruitController.scheduleInterview);
 
 // Two-step interview process routes
-// Schedule initial interview (Step 1 - by intern/staff/unit_manager)
-router.put('/:recruitId/schedule-initial', authenticateToken, requireRole(['intern', 'staff', 'unit_manager']), recruitController.scheduleInitialInterview);
+// Schedule initial interview (Step 1 - by intern/staff only)
+router.put('/:recruitId/schedule-initial', authenticateToken, requireRole(['intern', 'staff']), recruitController.scheduleInitialInterview);
 
 // Complete initial interview
-router.put('/:recruitId/complete-initial', authenticateToken, requireRole(['intern', 'staff', 'unit_manager']), recruitController.completeInitialInterview);
+router.put('/:recruitId/complete-initial', authenticateToken, requireRole(['intern', 'staff']), recruitController.completeInitialInterview);
 
 // Schedule final interview (Step 2 - by unit manager)
 router.put('/:recruitId/schedule-final', authenticateToken, requireRole(['unit_manager']), recruitController.scheduleFinalInterview);
