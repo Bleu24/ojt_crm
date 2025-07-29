@@ -506,7 +506,7 @@ exports.getTeamRecruits = async (req, res) => {
 // Export the upload middleware
 exports.uploadResume = exports.upload;
 
-// Preview resume with proper headers for inline display
+// Preview resume with direct Cloudinary URL for new tab opening
 exports.previewResume = async (req, res) => {
   try {
     const { id } = req.params;
@@ -526,47 +526,35 @@ exports.previewResume = async (req, res) => {
       return res.status(403).json({ error: 'Unauthorized' });
     }
 
+    // Return the direct Cloudinary URL for opening in new tab
     let previewUrl = recruit.resumeUrl;
 
-    // For Cloudinary URLs, modify for inline display and better PDF rendering
+    // For Cloudinary URLs, we can optionally add the fl_attachment:false flag
+    // but it's not strictly necessary for new tab opening
     if (recruit.resumeUrl.includes('cloudinary.com')) {
       // Check if it's a raw file upload (PDFs, DOCs, etc.)
       if (recruit.resumeUrl.includes('/raw/upload/')) {
-        // For raw files, only add fl_attachment:false to enable inline viewing
-        // Don't add f_auto or q_auto as they don't apply to raw files
+        // For raw files, add fl_attachment:false to enable inline viewing in browser
         previewUrl = recruit.resumeUrl.replace('/raw/upload/', '/raw/upload/fl_attachment:false/');
-      } else {
-        // For image transformations, add optimization flags
-        previewUrl = recruit.resumeUrl.replace('/upload/', '/upload/fl_attachment:false,f_auto,q_auto/');
       }
     }
 
-    console.log('Original URL:', recruit.resumeUrl);
-    console.log('Preview URL:', previewUrl);
+    console.log('Opening resume in new tab:', previewUrl);
 
-    // Better file type detection from the URL
-    let fileType = 'unknown';
+    // Detect file type for reference
+    let fileType = 'pdf';
     if (recruit.resumeUrl) {
-      // First try to extract from the actual URL path
       const urlPath = recruit.resumeUrl.split('/').pop() || '';
       const urlParts = urlPath.split('.');
       
       if (urlParts.length > 1) {
-        fileType = urlParts[urlParts.length - 1].toLowerCase();
-        // Remove any query parameters
-        fileType = fileType.split('?')[0];
+        fileType = urlParts[urlParts.length - 1].toLowerCase().split('?')[0];
       }
       
-      // If still unknown, try to detect from Cloudinary URL patterns
-      if (fileType === 'unknown' || fileType === '') {
-        if (recruit.resumeUrl.includes('.pdf')) fileType = 'pdf';
-        else if (recruit.resumeUrl.includes('.doc') && !recruit.resumeUrl.includes('.docx')) fileType = 'doc';
-        else if (recruit.resumeUrl.includes('.docx')) fileType = 'docx';
-        else fileType = 'pdf'; // Default to PDF for resume files
+      if (!['pdf', 'doc', 'docx'].includes(fileType)) {
+        fileType = 'pdf'; // Default to PDF for resume files
       }
     }
-
-    console.log('Detected file type:', fileType);
 
     return res.json({ 
       previewUrl: previewUrl,
@@ -575,8 +563,8 @@ exports.previewResume = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error previewing resume:', error);
-    res.status(500).json({ error: 'Failed to preview resume' });
+    console.error('Error getting resume URL:', error);
+    res.status(500).json({ error: 'Failed to get resume URL' });
   }
 };
 
