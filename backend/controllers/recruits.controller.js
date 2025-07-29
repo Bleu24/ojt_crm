@@ -498,3 +498,44 @@ exports.getTeamRecruits = async (req, res) => {
 
 // Export the upload middleware
 exports.uploadResume = exports.upload;
+
+// Preview resume with proper headers for inline display
+exports.previewResume = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Find the recruit
+    const recruit = await Recruit.findById(id);
+    if (!recruit) {
+      return res.status(404).json({ error: 'Recruit not found' });
+    }
+
+    if (!recruit.resumeUrl) {
+      return res.status(404).json({ error: 'Resume not found' });
+    }
+
+    // Check permissions
+    if (!['intern', 'staff', 'unit_manager', 'branch_manager', 'admin'].includes(req.user.role)) {
+      return res.status(403).json({ error: 'Unauthorized' });
+    }
+
+    // For Cloudinary URLs, modify for inline display
+    if (recruit.resumeUrl.includes('cloudinary.com')) {
+      // Add flag to display inline instead of download
+      const previewUrl = recruit.resumeUrl.replace('/upload/', '/upload/fl_attachment:false/');
+      return res.redirect(previewUrl);
+    }
+
+    // For local files (legacy), serve with inline headers
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': 'inline; filename="resume.pdf"'
+    });
+    
+    return res.redirect(recruit.resumeUrl);
+
+  } catch (error) {
+    console.error('Error previewing resume:', error);
+    res.status(500).json({ error: 'Failed to preview resume' });
+  }
+};
