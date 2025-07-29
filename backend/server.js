@@ -52,23 +52,7 @@ const napReportRoutes = require('./routes/napReport.routes');
 // Middlewares (Routes)
 app.use(express.json());
 
-// Additional CORS headers for complex requests
-app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Credentials', 'true');
-  res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Origin,X-Requested-With,Content-Type,Accept,Authorization');
-  
-  // Handle preflight requests
-  if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
-  }
-  
-  next();
-});
-
-// Serve static files for uploads under /api/uploads
-app.use('/api/uploads', express.static(path.join(__dirname, 'uploads')));
+// Note: Static file serving removed - now using Cloudinary for file storage
 
 app.use('/api/users', userRoutes);
 app.use('/api/auth', authRoutes);
