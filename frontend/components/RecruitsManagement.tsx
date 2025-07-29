@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { API_BASE_URL } from '@/config/api';
 import { getToken, getUserFromToken } from '@/utils/auth';
-import ResumePreviewModal from './ResumePreviewModal';
 
 interface User {
   _id: string;
@@ -61,8 +60,6 @@ export default function RecruitsManagement() {
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [selectedRecruit, setSelectedRecruit] = useState<Recruit | null>(null);
-  const [showResumePreview, setShowResumePreview] = useState(false);
-  const [previewResumeUrl, setPreviewResumeUrl] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedUnitManager, setSelectedUnitManager] = useState('');
@@ -98,7 +95,7 @@ export default function RecruitsManagement() {
     return getUserFromToken(token);
   };
 
-  // Handle resume preview
+  // Handle resume preview - open in new tab
   const handleResumePreview = async (recruit: Recruit) => {
     try {
       const token = getToken();
@@ -112,16 +109,24 @@ export default function RecruitsManagement() {
 
       if (response.ok) {
         const data = await response.json();
-        // Use the optimized preview URL from the backend
-        setPreviewResumeUrl(data.previewUrl);
-        setSelectedRecruit(recruit);
-        setShowResumePreview(true);
+        // Open the preview URL directly in a new tab
+        window.open(data.previewUrl, '_blank', 'noopener,noreferrer');
       } else {
-        alert('Unable to preview resume');
+        // Fallback: try to open the original resume URL
+        if (recruit.resumeUrl) {
+          window.open(recruit.resumeUrl, '_blank', 'noopener,noreferrer');
+        } else {
+          alert('Unable to preview resume');
+        }
       }
     } catch (error) {
       console.error('Error previewing resume:', error);
-      alert('Error loading resume preview');
+      // Fallback: try to open the original resume URL
+      if (recruit.resumeUrl) {
+        window.open(recruit.resumeUrl, '_blank', 'noopener,noreferrer');
+      } else {
+        alert('Error loading resume preview');
+      }
     }
   };
 
@@ -713,8 +718,9 @@ export default function RecruitsManagement() {
                                 <button
                                   onClick={() => handleResumePreview(recruit)}
                                   className="px-3 py-1 bg-green-500/20 text-green-400 rounded-lg hover:bg-green-500/30 transition-colors text-sm"
+                                  title="Opens resume in new tab"
                                 >
-                                  View Resume
+                                  📄 Open Resume
                                 </button>
                               )}
                             </div>
@@ -1163,20 +1169,6 @@ export default function RecruitsManagement() {
         </div>
       )}
 
-      {/* Resume Preview Modal */}
-      {showResumePreview && selectedRecruit && (
-        <ResumePreviewModal
-          isOpen={showResumePreview}
-          onClose={() => {
-            setShowResumePreview(false);
-            setPreviewResumeUrl('');
-            setSelectedRecruit(null);
-          }}
-          resumeUrl={previewResumeUrl}
-          candidateName={selectedRecruit.fullName}
-          recruitId={selectedRecruit._id}
-        />
-      )}
     </div>
   );
 }
