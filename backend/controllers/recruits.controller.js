@@ -520,18 +520,89 @@ exports.previewResume = async (req, res) => {
       return res.status(403).json({ error: 'Unauthorized' });
     }
 
-    // For Cloudinary URLs, modify for inline display
+    let previewUrl = recruit.resumeUrl;
+
+    // For Cloudinary URLs, modify for inline display and better PDF rendering
     if (recruit.resumeUrl.includes('cloudinary.com')) {
-      // Add flag to display inline instead of download
-      const previewUrl = recruit.resumeUrl.replace('/upload/', '/upload/fl_attachment:false/');
-      return res.json({ previewUrl });
+      // Add multiple flags for optimal PDF display:
+      // fl_attachment:false - prevents download, enables inline viewing
+      // f_auto - automatic format optimization
+      // q_auto - automatic quality optimization  
+      previewUrl = recruit.resumeUrl.replace('/upload/', '/upload/fl_attachment:false,f_auto,q_auto/');
+      
+      // For PDF files, add PDF-specific optimizations
+      if (recruit.resumeUrl.toLowerCase().includes('.pdf') || recruit.resumeUrl.includes('/raw/upload/')) {
+        previewUrl = recruit.resumeUrl.replace('/upload/', '/upload/fl_attachment:false/');
+      }
     }
 
-    // For local files (legacy), return the URL directly
-    return res.json({ previewUrl: recruit.resumeUrl });
+    console.log('Original URL:', recruit.resumeUrl);
+    console.log('Preview URL:', previewUrl);
+
+    return res.json({ 
+      previewUrl: previewUrl,
+      originalUrl: recruit.resumeUrl,
+      fileType: recruit.resumeUrl.split('.').pop()?.toLowerCase() || 'unknown'
+    });
 
   } catch (error) {
     console.error('Error previewing resume:', error);
     res.status(500).json({ error: 'Failed to preview resume' });
+  }
+};
+
+// Proxy resume file with proper headers for better browser compatibility
+exports.proxyResume = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Find the recruit
+    const recruit = await Recruit.findById(id);
+    if (!recruit) {
+      return res.status(404).json({ error: 'Recruit not found' });
+    }
+
+    if (!recruit.resumeUrl) {
+      return res.status(404).json({ error: 'Resume not found' });
+    }
+
+    // Check permissions
+    if (!['intern', 'staff', 'unit_manager', 'branch_manager', 'admin'].includes(req.user.role)) {
+      return res.status(403).json({ error: 'Unauthorized' });
+    }
+
+    // For Cloudinary URLs, fetch and proxy the file
+    if (recruit.resumeUrl.includes('cloudinary.com')) {
+      const axios = require('axios');
+      
+      try {
+        const response = await axios.get(recruit.resumeUrl, {
+          responseType: 'stream',
+          timeout: 30000
+        });
+
+        // Set appropriate headers for inline viewing
+        res.set({
+          'Content-Type': response.headers['content-type'] || 'application/pdf',
+          'Content-Disposition': 'inline',
+          'Cache-Control': 'public, max-age=3600',
+          'Access-Control-Allow-Origin': '*'
+        });
+
+        // Pipe the file data to the response
+        response.data.pipe(res);
+      } catch (proxyError) {
+        console.error('Error proxying file:', proxyError);
+        // Fallback to redirect
+        return res.redirect(recruit.resumeUrl);
+      }
+    } else {
+      // For local files, redirect directly
+      return res.redirect(recruit.resumeUrl);
+    }
+
+  } catch (error) {
+    console.error('Error proxying resume:', error);
+    res.status(500).json({ error: 'Failed to load resume' });
   }
 };
