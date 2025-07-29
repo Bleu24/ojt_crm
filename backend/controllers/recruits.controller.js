@@ -52,24 +52,45 @@ exports.getAllRecruits = async (req, res) => {
     }
 
     // For unit managers, show recruits assigned to them for final interview OR recruits from their team
+    // Only show "upcoming" recruits (not hired/rejected)
     if (req.user.role === 'unit_manager') {
       // Find users directly under this manager
       const team = await User.find({ supervisorId: req.user.userId }).select('_id');
       const teamIds = team.map(user => user._id);
       
-      query.$or = [
-        { finalInterviewAssignedTo: req.user.userId }, // Recruits assigned for final interview
-        { assignedTo: { $in: teamIds } } // Recruits assigned to team members
+      query.$and = [
+        {
+          $or: [
+            { finalInterviewAssignedTo: req.user.userId }, // Recruits assigned for final interview
+            { assignedTo: { $in: teamIds } } // Recruits assigned to team members
+          ]
+        },
+        {
+          applicationStatus: { 
+            $in: ['Applied', 'Pending', 'Interviewed', 'Pending Final Interview'] 
+          } // Only upcoming/active recruits
+        }
       ];
     }
 
     // Search functionality
     if (search) {
-      query.$or = [
-        { fullName: { $regex: search, $options: 'i' } },
-        { email: { $regex: search, $options: 'i' } },
-        { contactNumber: { $regex: search, $options: 'i' } }
-      ];
+      const searchQuery = {
+        $or: [
+          { fullName: { $regex: search, $options: 'i' } },
+          { email: { $regex: search, $options: 'i' } },
+          { contactNumber: { $regex: search, $options: 'i' } }
+        ]
+      };
+      
+      // If unit manager already has $and query, add search to it
+      if (req.user.role === 'unit_manager' && query.$and) {
+        query.$and.push(searchQuery);
+      } else {
+        // For other roles or if no existing $and query
+        query.$and = query.$and || [];
+        query.$and.push(searchQuery);
+      }
     }
 
     const recruits = await Recruit.find(query)
