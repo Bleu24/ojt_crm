@@ -1,8 +1,9 @@
 const fs = require('fs');
 const path = require('path');
-const multer = require('multer');
 const pdfParse = require('pdf-parse');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
+const { napReportUpload, uploadToCloudinary, deleteFromCloudinary, extractPublicId } = require('../utils/cloudinary');
+const axios = require('axios');
 
 // Initialize Gemini AI
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
@@ -10,34 +11,8 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 // In-memory store for parsed reports by month
 const napReports = {};
 
-// Configure multer for PDF uploads
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    const dir = 'uploads/nap-reports/';
-    fs.mkdirSync(dir, { recursive: true });
-    cb(null, dir);
-  },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-    cb(null, 'nap-report-' + uniqueSuffix + path.extname(file.originalname));
-  }
-});
-
-const upload = multer({
-  storage,
-  limits: { fileSize: 10 * 1024 * 1024 },
-  fileFilter: function (req, file, cb) {
-    const allowed = /pdf/;
-    const extname = allowed.test(path.extname(file.originalname).toLowerCase());
-    const mimetype = allowed.test(file.mimetype);
-    if (extname && mimetype) {
-      return cb(null, true);
-    }
-    cb(new Error('Only PDF files are allowed'));
-  }
-});
-
-exports.uploadPdf = upload.single('pdfFile');
+// Configure multer for PDF uploads using Cloudinary
+exports.uploadPdf = napReportUpload.single('pdfFile');
 
 /**
  * Send text to Gemini API for intelligent parsing of NAP reports
@@ -188,9 +163,21 @@ function regexParsingAssist(text) {
 }
 
 // Parse PDF and extract nap report data using Gemini AI
-async function parseNapPdf(filePath) {
+async function parseNapPdf(fileUrlOrPath) {
   try {
-    const dataBuffer = fs.readFileSync(filePath);
+    let dataBuffer;
+    
+    // Check if it's a Cloudinary URL or local file path
+    if (fileUrlOrPath.startsWith('http')) {
+      // Download file from Cloudinary
+      console.log('Downloading PDF from Cloudinary:', fileUrlOrPath);
+      const response = await axios.get(fileUrlOrPath, { responseType: 'arraybuffer' });
+      dataBuffer = Buffer.from(response.data);
+    } else {
+      // Read local file (fallback)
+      dataBuffer = fs.readFileSync(fileUrlOrPath);
+    }
+    
     const data = await pdfParse(dataBuffer);
     const text = data.text;
     
@@ -266,7 +253,13 @@ exports.uploadNapReport = async (req, res) => {
       return res.status(400).json({ error: 'No file uploaded' });
     }
     
-    // Parse the PDF using Gemini AI
+    console.log('Uploaded file info:', {
+      originalname: req.file.originalname,
+      cloudinaryUrl: req.file.path,
+      publicId: req.file.filename
+    });
+    
+    // Parse the PDF using Gemini AI (now uses Cloudinary URL)
     const parsed = await parseNapPdf(req.file.path);
     
     if (!parsed || parsed.length === 0) {
