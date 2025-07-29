@@ -7,7 +7,13 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "ngrok": "ngrok http 3000"
+    "lint:fix": "next lint --fix",
+    "type-check": "tsc --noEmit",
+    "build:analyze": "ANALYZE=true next build",
+    "export": "next build && next export",
+    "clean": "rm -rf .next out",
+    "ngrok": "ngrok http 3000",
+    "env:check": "node -e \"console.log('API URL:', process.env.NEXT_PUBLIC_API_URL)\""
   },
   "dependencies": {
     "chart.js": "^4.5.0",
