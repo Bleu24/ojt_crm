@@ -23,9 +23,13 @@ PORT=5000
 # Frontend URL (for CORS)
 FRONTEND_URL=https://your-frontend.vercel.app
 
+# Cloudinary Configuration (Required)
+CLOUDINARY_CLOUD_NAME=your_cloud_name_here
+CLOUDINARY_API_KEY=your_api_key_here
+CLOUDINARY_API_SECRET=your_api_secret_here
+
 # Optional: File Upload Limits
 MAX_FILE_SIZE=10485760
-UPLOAD_DIR=uploads
 ```
 
 ### 2. Platform-Specific Deployment
