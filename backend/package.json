@@ -11,7 +11,10 @@
     "lint": "echo 'Add linting if needed'",
     "ngrok": "ngrok http 5000",
     "seed": "node scripts/seed.js",
-    "migrate": "node scripts/migrate.js"
+    "migrate": "node scripts/migrate.js",
+    "migrate:cloudinary": "node migrate-to-cloudinary.js",
+    "test:upload": "node upload-test.js",
+    "cleanup:uploads": "node cleanup-uploads.js"
   },
   "keywords": [],
   "author": "",
@@ -19,7 +22,9 @@
   "type": "commonjs",
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
+    "axios": "^1.11.0",
     "bcrypt": "^6.0.0",
+    "cloudinary": "^2.7.0",
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
     "exceljs": "^4.4.0",
@@ -28,6 +33,7 @@
     "luxon": "^3.6.1",
     "mongoose": "^8.16.0",
     "multer": "^2.0.1",
+    "multer-storage-cloudinary": "^4.0.0",
     "pdf-parse": "^1.1.1"
   },
   "devDependencies": {
