@@ -1,36 +1,9 @@
 const Recruit = require('../models/Recruit.model');
 const User = require('../models/User.model');
-const multer = require('multer');
-const path = require('path');
+const { resumeUpload, deleteFromCloudinary, extractPublicId } = require('../utils/cloudinary');
 
-// Configure multer for file uploads
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, 'uploads/resumes/');
-  },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, 'resume-' + uniqueSuffix + path.extname(file.originalname));
-  }
-});
-
-const upload = multer({
-  storage: storage,
-  limits: {
-    fileSize: 5 * 1024 * 1024 // 5MB limit
-  },
-  fileFilter: function (req, file, cb) {
-    const allowedTypes = /pdf|doc|docx/;
-    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-    const mimetype = allowedTypes.test(file.mimetype);
-    
-    if (mimetype && extname) {
-      return cb(null, true);
-    } else {
-      cb(new Error('Only PDF, DOC, and DOCX files are allowed'));
-    }
-  }
-});
+// Configure multer for file uploads using Cloudinary
+exports.upload = resumeUpload.single('resume');
 
 // Create a new recruit
 exports.createRecruit = async (req, res) => {
@@ -40,9 +13,10 @@ exports.createRecruit = async (req, res) => {
       assignedTo: req.user.userId
     };
 
-    // If file was uploaded, add the resume URL
+    // If file was uploaded, add the resume URL and Cloudinary ID
     if (req.file) {
-      recruitData.resumeUrl = req.file.path;
+      recruitData.resumeUrl = req.file.path; // Cloudinary URL
+      recruitData.resumeCloudinaryId = req.file.filename; // Cloudinary public ID
     }
 
     const recruit = new Recruit(recruitData);
@@ -148,9 +122,24 @@ exports.updateRecruit = async (req, res) => {
     const recruitId = req.params.id;
     const updateData = { ...req.body };
 
-    // If file was uploaded, add the resume URL
+    // If file was uploaded, handle old file deletion and add new resume URL
     if (req.file) {
-      updateData.resumeUrl = req.file.path;
+      // Find current recruit to get old Cloudinary ID
+      const currentRecruit = await Recruit.findById(recruitId);
+      
+      // Delete old resume from Cloudinary if it exists
+      if (currentRecruit && currentRecruit.resumeCloudinaryId) {
+        try {
+          await deleteFromCloudinary(currentRecruit.resumeCloudinaryId);
+          console.log('Old resume deleted from Cloudinary:', currentRecruit.resumeCloudinaryId);
+        } catch (deleteError) {
+          console.error('Error deleting old resume from Cloudinary:', deleteError);
+          // Don't fail the update if deletion fails
+        }
+      }
+      
+      updateData.resumeUrl = req.file.path; // New Cloudinary URL
+      updateData.resumeCloudinaryId = req.file.filename; // New Cloudinary public ID
     }
 
     const updated = await Recruit.findByIdAndUpdate(recruitId, updateData, { new: true })
@@ -431,10 +420,26 @@ exports.getUnitManagers = async (req, res) => {
 // Delete recruit
 exports.deleteRecruit = async (req, res) => {
   try {
-    const deleted = await Recruit.findByIdAndDelete(req.params.id);
-    if (!deleted) {
+    const recruit = await Recruit.findById(req.params.id);
+    
+    if (!recruit) {
       return res.status(404).json({ message: 'Recruit not found' });
     }
+    
+    // Delete resume from Cloudinary if it exists
+    if (recruit.resumeCloudinaryId) {
+      try {
+        await deleteFromCloudinary(recruit.resumeCloudinaryId);
+        console.log('Resume deleted from Cloudinary:', recruit.resumeCloudinaryId);
+      } catch (deleteError) {
+        console.error('Error deleting resume from Cloudinary:', deleteError);
+        // Continue with recruit deletion even if file deletion fails
+      }
+    }
+    
+    // Delete the recruit record
+    await Recruit.findByIdAndDelete(req.params.id);
+    
     res.status(200).json({ message: 'Recruit deleted successfully' });
   } catch (err) {
     res.status(500).json({ error: err.message });
