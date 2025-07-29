@@ -530,25 +530,42 @@ exports.previewResume = async (req, res) => {
 
     // For Cloudinary URLs, modify for inline display and better PDF rendering
     if (recruit.resumeUrl.includes('cloudinary.com')) {
-      // Add multiple flags for optimal PDF display:
-      // fl_attachment:false - prevents download, enables inline viewing
-      // f_auto - automatic format optimization
-      // q_auto - automatic quality optimization  
-      previewUrl = recruit.resumeUrl.replace('/upload/', '/upload/fl_attachment:false,f_auto,q_auto/');
-      
-      // For PDF files, add PDF-specific optimizations
-      if (recruit.resumeUrl.toLowerCase().includes('.pdf') || recruit.resumeUrl.includes('/raw/upload/')) {
-        previewUrl = recruit.resumeUrl.replace('/upload/', '/upload/fl_attachment:false/');
+      // Check if it's a raw file upload (PDFs, DOCs, etc.)
+      if (recruit.resumeUrl.includes('/raw/upload/')) {
+        // For raw files, only add fl_attachment:false to enable inline viewing
+        // Don't add f_auto or q_auto as they don't apply to raw files
+        previewUrl = recruit.resumeUrl.replace('/raw/upload/', '/raw/upload/fl_attachment:false/');
+      } else {
+        // For image transformations, add optimization flags
+        previewUrl = recruit.resumeUrl.replace('/upload/', '/upload/fl_attachment:false,f_auto,q_auto/');
       }
     }
 
     console.log('Original URL:', recruit.resumeUrl);
     console.log('Preview URL:', previewUrl);
 
+    // Better file type detection
+    let fileType = 'unknown';
+    if (recruit.resumeUrl) {
+      // Extract file extension from URL
+      const urlParts = recruit.resumeUrl.split('.');
+      if (urlParts.length > 1) {
+        fileType = urlParts[urlParts.length - 1].toLowerCase();
+        // Remove any query parameters
+        fileType = fileType.split('?')[0];
+      }
+      // If still unknown, try to detect from Cloudinary URL patterns
+      if (fileType === 'unknown' || fileType === '') {
+        if (recruit.resumeUrl.includes('.pdf')) fileType = 'pdf';
+        else if (recruit.resumeUrl.includes('.doc')) fileType = 'doc';
+        else if (recruit.resumeUrl.includes('.docx')) fileType = 'docx';
+      }
+    }
+
     return res.json({ 
       previewUrl: previewUrl,
       originalUrl: recruit.resumeUrl,
-      fileType: recruit.resumeUrl.split('.').pop()?.toLowerCase() || 'unknown'
+      fileType: fileType
     });
 
   } catch (error) {
@@ -561,6 +578,7 @@ exports.previewResume = async (req, res) => {
 exports.proxyResume = async (req, res) => {
   try {
     const { id } = req.params;
+    const { download } = req.query; // Check if download is requested
     
     // Find the recruit
     const recruit = await Recruit.findById(id);
@@ -580,15 +598,34 @@ exports.proxyResume = async (req, res) => {
     // For Cloudinary URLs, fetch and proxy the file
     if (recruit.resumeUrl.includes('cloudinary.com')) {
       try {
+        // Detect file type from URL
+        let fileType = 'pdf';
+        let contentType = 'application/pdf';
+        let filename = `${recruit.fullName || 'resume'}-resume`;
+        
+        if (recruit.resumeUrl.includes('.doc')) {
+          fileType = 'doc';
+          contentType = 'application/msword';
+          filename += '.doc';
+        } else if (recruit.resumeUrl.includes('.docx')) {
+          fileType = 'docx';
+          contentType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+          filename += '.docx';
+        } else {
+          filename += '.pdf';
+        }
+
         const response = await axios.get(recruit.resumeUrl, {
           responseType: 'stream',
           timeout: 30000
         });
 
-        // Set appropriate headers for inline viewing
+        // Set headers based on whether download is requested
+        const disposition = download === 'true' ? 'attachment' : 'inline';
+        
         res.set({
-          'Content-Type': response.headers['content-type'] || 'application/pdf',
-          'Content-Disposition': 'inline',
+          'Content-Type': response.headers['content-type'] || contentType,
+          'Content-Disposition': `${disposition}; filename="${filename}"`,
           'Cache-Control': 'public, max-age=3600',
           'Access-Control-Allow-Origin': '*'
         });
