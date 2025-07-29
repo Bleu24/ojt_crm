@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { API_BASE_URL } from '@/config/api';
+import { API_BASE_URL, API_ENDPOINTS, buildApiUrl, devLog } from '@/config/api';
 import { getToken } from '@/utils/auth';
 
 interface NapRow {
@@ -42,7 +42,7 @@ export default function NapReport() {
         return;
       }
 
-      const res = await fetch(`${API_BASE_URL}/nap-report`, {
+      const res = await fetch(buildApiUrl(API_ENDPOINTS.NAP_REPORT.BASE), {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -88,7 +88,7 @@ export default function NapReport() {
       const formData = new FormData();
       formData.append('pdfFile', file);
 
-      const res = await fetch(`${API_BASE_URL}/nap-report/upload`, {
+      const res = await fetch(buildApiUrl(API_ENDPOINTS.NAP_REPORT.UPLOAD), {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -128,7 +128,7 @@ export default function NapReport() {
       }
 
       // Build the URL based on export type
-      let url = `${API_BASE_URL}/nap-report/export`;
+      let url = buildApiUrl(API_ENDPOINTS.NAP_REPORT.EXPORT);
       let filename = 'NAP_Report_All_Months.xlsx';
       
       if (exportType === 'single' && selectedMonth) {
@@ -138,6 +138,8 @@ export default function NapReport() {
         url += '?view=total';
         filename = 'NAP_Report_All_Months.xlsx';
       }
+
+      devLog('Exporting NAP report:', { exportType, url, filename });
 
       // Create a temporary link to download the file with proper headers
       const res = await fetch(url, {
