@@ -35,6 +35,17 @@ export default function ResumePreviewModal({
     return url;
   };
 
+  // Get download URL with proper filename
+  const getDownloadUrl = (forceDownload = false) => {
+    if (recruitId) {
+      const downloadParam = forceDownload ? '?download=true' : '';
+      return `${API_BASE_URL}/recruits/${recruitId}/resume/proxy${downloadParam}`;
+    }
+    return resumeUrl;
+  };
+
+  const downloadUrl = getDownloadUrl();
+  const forceDownloadUrl = getDownloadUrl(true);
   const previewUrl = getPreviewUrl(resumeUrl);
 
   // Handle iframe load error
@@ -75,7 +86,7 @@ export default function ResumePreviewModal({
           </div>
           <div className="flex items-center space-x-2">
             <a
-              href={resumeUrl}
+              href={downloadUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center px-3 py-2 text-sm bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
@@ -85,7 +96,7 @@ export default function ResumePreviewModal({
               Open
             </a>
             <a
-              href={resumeUrl}
+              href={forceDownloadUrl}
               download
               className="flex items-center px-3 py-2 text-sm bg-green-500 text-white rounded hover:bg-green-600 transition-colors"
               title="Download resume"
@@ -127,7 +138,7 @@ export default function ResumePreviewModal({
                 </div>
                 <div className="space-x-2">
                   <a
-                    href={resumeUrl}
+                    href={downloadUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
@@ -136,7 +147,7 @@ export default function ResumePreviewModal({
                     Open in New Tab
                   </a>
                   <a
-                    href={resumeUrl}
+                    href={forceDownloadUrl}
                     download
                     className="inline-flex items-center px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition-colors"
                   >
