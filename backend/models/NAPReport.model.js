@@ -88,7 +88,8 @@ const NAPReportSchema = new mongoose.Schema({
   sourceFile: {
     originalName: String,
     fileName: String,
-    filePath: String,
+    filePath: String, // Now stores Cloudinary URL
+    cloudinaryPublicId: String, // Store Cloudinary public ID for deletion
     fileSize: Number,
     uploadDate: {
       type: Date,
