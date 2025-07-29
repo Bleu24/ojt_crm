@@ -1,9 +1,12 @@
 const Recruit = require('../models/Recruit.model');
 const User = require('../models/User.model');
-const { resumeUpload, deleteFromCloudinary, extractPublicId } = require('../utils/cloudinary');
+const { resumeUpload, uploadToCloudinary, deleteFromCloudinary, extractPublicId } = require('../utils/cloudinary');
 
 // Configure multer for file uploads using Cloudinary
-exports.upload = resumeUpload.single('resume');
+exports.upload = [
+  resumeUpload.single('resume'),
+  uploadToCloudinary('crm/resumes', 'raw')
+];
 
 // Create a new recruit
 exports.createRecruit = async (req, res) => {
