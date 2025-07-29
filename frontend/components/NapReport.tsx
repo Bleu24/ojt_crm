@@ -115,8 +115,8 @@ export default function NapReport() {
     }
   };
 
-  const exportExcel = async () => {
-    if (!selectedMonth) {
+  const exportExcel = async (exportType: 'single' | 'all' = 'single') => {
+    if (exportType === 'single' && !selectedMonth) {
       setError('Please select a month to export');
       return;
     }
@@ -127,8 +127,20 @@ export default function NapReport() {
         throw new Error('No authentication token found');
       }
 
+      // Build the URL based on export type
+      let url = `${API_BASE_URL}/nap-report/export`;
+      let filename = 'NAP_Report_All_Months.xlsx';
+      
+      if (exportType === 'single' && selectedMonth) {
+        url += `?month=${selectedMonth}`;
+        filename = `NAP_Report_${selectedMonth}.xlsx`;
+      } else if (exportType === 'all') {
+        url += '?view=total';
+        filename = 'NAP_Report_All_Months.xlsx';
+      }
+
       // Create a temporary link to download the file with proper headers
-      const res = await fetch(`${API_BASE_URL}/nap-report/export?month=${selectedMonth}`, {
+      const res = await fetch(url, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -140,22 +152,20 @@ export default function NapReport() {
       }
 
       const blob = await res.blob();
-      const url = window.URL.createObjectURL(blob);
+      const downloadUrl = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
-      link.href = url;
-      link.download = `NAP_Report_${selectedMonth}.xlsx`;
+      link.href = downloadUrl;
+      link.download = filename;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
+      window.URL.revokeObjectURL(downloadUrl);
 
-      setSuccess('Export completed successfully');
+      setSuccess(`Export completed successfully: ${filename}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Export failed');
     }
-  };
-
-  const handleMonthFilter = (month: string) => {
+  };  const handleMonthFilter = (month: string) => {
     setSelectedMonth(month);
     if (month) {
       setData(allReports.filter(report => report.month === month));
@@ -310,21 +320,34 @@ export default function NapReport() {
                   </select>
                 </div>
                 
-                {/* Export Button */}
-                <div>
+                {/* Export Buttons */}
+                <div className="flex flex-col space-y-2">
                   <label className="block text-sm font-medium text-gray-300 mb-1 opacity-0">
-                    Action
+                    Actions
                   </label>
-                  <button
-                    onClick={exportExcel}
-                    disabled={!selectedMonth}
-                    className="px-4 py-2 bg-gradient-to-r from-emerald-600 to-cyan-600 text-white font-semibold rounded-lg hover:from-emerald-700 hover:to-cyan-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 flex items-center space-x-2"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                    <span>Export to Excel</span>
-                  </button>
+                  <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
+                    <button
+                      onClick={() => exportExcel('single')}
+                      disabled={!selectedMonth}
+                      className="px-4 py-2 bg-gradient-to-r from-emerald-600 to-cyan-600 text-white font-semibold rounded-lg hover:from-emerald-700 hover:to-cyan-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 flex items-center space-x-2 text-sm"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      <span>Export Month</span>
+                    </button>
+                    
+                    <button
+                      onClick={() => exportExcel('all')}
+                      disabled={allReports.length === 0}
+                      className="px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-lg hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 flex items-center space-x-2 text-sm"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4" />
+                      </svg>
+                      <span>Export All</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -403,7 +426,7 @@ export default function NapReport() {
                                 ? 'bg-red-500/20 text-red-300' 
                                 : 'bg-emerald-500/20 text-emerald-300'
                             }`}>
-                              {row.lapsed ? 'YES' : 'NO'}
+                              {row.lapsed}
                             </span>
                           </td>
                         </tr>
