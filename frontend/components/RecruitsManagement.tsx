@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { API_BASE_URL } from '@/config/api';
 import { getToken, getUserFromToken } from '@/utils/auth';
+import ResumePreviewModal from './ResumePreviewModal';
 
 interface User {
   _id: string;
@@ -60,6 +61,8 @@ export default function RecruitsManagement() {
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [selectedRecruit, setSelectedRecruit] = useState<Recruit | null>(null);
+  const [showResumePreview, setShowResumePreview] = useState(false);
+  const [previewResumeUrl, setPreviewResumeUrl] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedUnitManager, setSelectedUnitManager] = useState('');
@@ -93,6 +96,32 @@ export default function RecruitsManagement() {
     const token = getToken();
     if (!token) return null;
     return getUserFromToken(token);
+  };
+
+  // Handle resume preview
+  const handleResumePreview = async (recruit: Recruit) => {
+    try {
+      const token = getToken();
+      if (!token) return;
+
+      const response = await fetch(`${API_BASE_URL}/api/recruits/${recruit._id}/preview-resume`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setPreviewResumeUrl(data.previewUrl);
+        setSelectedRecruit(recruit);
+        setShowResumePreview(true);
+      } else {
+        alert('Unable to preview resume');
+      }
+    } catch (error) {
+      console.error('Error previewing resume:', error);
+      alert('Error loading resume preview');
+    }
   };
 
   // Fetch recruits
@@ -673,14 +702,12 @@ export default function RecruitsManagement() {
                               )}
                               
                               {recruit.resumeUrl && (
-                                <a
-                                  href={recruit.resumeUrl.startsWith('http') ? recruit.resumeUrl : `${API_BASE_URL}/${recruit.resumeUrl}`}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
+                                <button
+                                  onClick={() => handleResumePreview(recruit)}
                                   className="px-3 py-1 bg-green-500/20 text-green-400 rounded-lg hover:bg-green-500/30 transition-colors text-sm"
                                 >
-                                  Resume
-                                </a>
+                                  View Resume
+                                </button>
                               )}
                             </div>
                             
@@ -1126,6 +1153,21 @@ export default function RecruitsManagement() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Resume Preview Modal */}
+      {showResumePreview && selectedRecruit && (
+        <ResumePreviewModal
+          isOpen={showResumePreview}
+          onClose={() => {
+            setShowResumePreview(false);
+            setPreviewResumeUrl('');
+            setSelectedRecruit(null);
+          }}
+          resumeUrl={previewResumeUrl}
+          candidateName={selectedRecruit.fullName}
+          recruitId={selectedRecruit._id}
+        />
       )}
     </div>
   );
