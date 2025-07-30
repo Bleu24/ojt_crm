@@ -10,7 +10,7 @@ interface NapRow {
   month: string;
   cc: number;
   sale: number;
-  lapsed: boolean;
+  lapsed: number;
   createdAt?: string;
 }
 
@@ -219,6 +219,18 @@ export default function NapReport() {
       setData(allReports);
     }
   };
+
+  // Calculate totals for the current displayed data
+  const calculateTotals = () => {
+    return data.reduce((totals, row) => {
+      totals.totalCC += row.cc || 0;
+      totals.totalSale += row.sale || 0;
+      totals.totalLapsed += row.lapsed || 0;
+      return totals;
+    }, { totalCC: 0, totalSale: 0, totalLapsed: 0 });
+  };
+
+  const totals = calculateTotals();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative overflow-hidden">
@@ -456,38 +468,69 @@ export default function NapReport() {
                         </td>
                       </tr>
                     ) : (
-                      data.map((row, idx) => (
-                        <tr 
-                          key={row._id || idx} 
-                          className="hover:bg-white/5 transition-colors"
-                        >
-                          <td className="px-4 py-4 text-white font-medium">
-                            {row.agentName}
+                      <>
+                        {data.map((row, idx) => (
+                          <tr 
+                            key={row._id || idx} 
+                            className="hover:bg-white/5 transition-colors"
+                          >
+                            <td className="px-4 py-4 text-white font-medium">
+                              {row.agentName}
+                            </td>
+                            <td className="px-4 py-4 text-gray-300">
+                              {row.month}
+                            </td>
+                            <td className="px-4 py-4 text-center">
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-500/20 text-blue-300">
+                                {row.cc}
+                              </span>
+                            </td>
+                            <td className="px-4 py-4 text-center">
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-500/20 text-emerald-300">
+                                {row.sale}
+                              </span>
+                            </td>
+                            <td className="px-4 py-4 text-center">
+                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                row.lapsed 
+                                  ? 'bg-red-500/20 text-red-300' 
+                                  : 'bg-emerald-500/20 text-emerald-300'
+                              }`}>
+                                {row.lapsed}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                        
+                        {/* Totals Row */}
+                        <tr className="border-t-2 border-yellow-500/50 bg-gradient-to-r from-yellow-500/10 to-orange-500/10">
+                          <td className="px-4 py-4 text-yellow-300 font-bold text-lg">
+                            TOTALS
                           </td>
-                          <td className="px-4 py-4 text-gray-300">
-                            {row.month}
+                          <td className="px-4 py-4 text-gray-400 italic">
+                            {selectedMonth || 'All Months'}
                           </td>
                           <td className="px-4 py-4 text-center">
-                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-500/20 text-blue-300">
-                              {row.cc}
+                            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-bold bg-blue-600/30 text-blue-200 border border-blue-400/30">
+                              {totals.totalCC}
                             </span>
                           </td>
                           <td className="px-4 py-4 text-center">
-                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-500/20 text-emerald-300">
-                              {row.sale}
+                            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-bold bg-emerald-600/30 text-emerald-200 border border-emerald-400/30">
+                              {totals.totalSale.toFixed(2)}
                             </span>
                           </td>
                           <td className="px-4 py-4 text-center">
-                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                              row.lapsed 
-                                ? 'bg-red-500/20 text-red-300' 
-                                : 'bg-emerald-500/20 text-emerald-300'
+                            <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-bold border ${
+                              totals.totalLapsed > 0
+                                ? 'bg-red-600/30 text-red-200 border-red-400/30' 
+                                : 'bg-emerald-600/30 text-emerald-200 border-emerald-400/30'
                             }`}>
-                              {row.lapsed}
+                              {totals.totalLapsed.toFixed(2)}
                             </span>
                           </td>
                         </tr>
-                      ))
+                      </>
                     )}
                   </tbody>
                 </table>
