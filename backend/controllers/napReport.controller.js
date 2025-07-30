@@ -142,30 +142,9 @@ ${text}
 }
 
 /**
- * Fallback regex parsing (assistant tool for API)
- * Used only if Gemini fails or for validation
+ * Parse PDF and extract nap report data using Gemini AI
+ * Now relies entirely on AI parsing for cleaner, more traceable results
  */
-function regexParsingAssist(text) {
-  const lines = text.split(/\r?\n/);
-  const results = [];
-  
-  lines.forEach(line => {
-    const match = line.match(/^([A-Za-z ,.'-]+)\s+(?:API[: ]?)?(\d+(?:\.\d+)?)\s+(?:CC[: ]?)?(\d+(?:\.\d+)?)\s+(?:Credit|SALE)[: ]?(\d+(?:\.\d+)?)(\s+(?:Lapsed|LAPSED))?/i);
-    if (match) {
-      results.push({
-        name: match[1].trim(),
-        api: parseFloat(match[2]) || 0,
-        cc: parseFloat(match[3]) || 0,
-        credit: parseFloat(match[4]) || 0,
-        lapsed: !!match[5]
-      });
-    }
-  });
-  
-  return results;
-}
-
-// Parse PDF and extract nap report data using Gemini AI
 async function parseNapPdf(fileUrlOrPath) {
   try {
     let dataBuffer;
@@ -187,60 +166,42 @@ async function parseNapPdf(fileUrlOrPath) {
     console.log('PDF text extracted, length:', text.length);
     console.log('PDF text sample:', text.substring(0, 500));
 
-    // Primary parsing with Gemini AI
-    try {
-      const geminiResults = await sendTextToGeminiForParsing(text);
-      
-      if (geminiResults && geminiResults.length > 0) {
-        // Convert Gemini monthly format to flat format for backwards compatibility
-        const convertedResults = [];
-        
-        geminiResults.forEach(agent => {
-          if (agent.monthly) {
-            // Process each month for this agent
-            Object.keys(agent.monthly).forEach(month => {
-              const monthData = agent.monthly[month];
-              // Include if there's any activity: sales OR lapses OR both
-              if (monthData.cc > 0 || monthData.lapsed > 0 || monthData.sale > 0) {
-                console.log(`Processing ${agent.agentName} for ${month}: cc=${monthData.cc}, sale=${monthData.sale}, lapsed=${monthData.lapsed}`);
-                convertedResults.push({
-                  name: agent.agentName,
-                  api: monthData.sale,
-                  cc: monthData.cc,
-                  credit: monthData.sale,
-                  lapsed: Math.abs(monthData.lapsed), // Ensure positive value for lapsed amount
-                  month: month,
-                  monthField: month,
-                  monthValue: monthData.sale
-                });
-              }
+    // Primary parsing with Gemini AI - no fallback, AI shoulders all parsing
+    const geminiResults = await sendTextToGeminiForParsing(text);
+    
+    if (!geminiResults || geminiResults.length === 0) {
+      console.log('DEBUGGING - PDF text first 2000 chars:', text.substring(0, 2000));
+      throw new Error('Unable to parse PDF content using Gemini AI. The document format may not be supported or the content is not recognizable as a NAP report.');
+    }
+    
+    // Convert Gemini monthly format to flat format for backwards compatibility
+    const convertedResults = [];
+    
+    geminiResults.forEach(agent => {
+      if (agent.monthly) {
+        // Process each month for this agent
+        Object.keys(agent.monthly).forEach(month => {
+          const monthData = agent.monthly[month];
+          // Include if there's any activity: sales OR lapses OR both
+          if (monthData.cc > 0 || monthData.lapsed > 0 || monthData.sale > 0) {
+            console.log(`Processing ${agent.agentName} for ${month}: cc=${monthData.cc}, sale=${monthData.sale}, lapsed=${monthData.lapsed}`);
+            convertedResults.push({
+              name: agent.agentName,
+              api: monthData.sale,
+              cc: monthData.cc,
+              credit: monthData.sale,
+              lapsed: Math.abs(monthData.lapsed), // Ensure positive value for lapsed amount
+              month: month,
+              monthField: month,
+              monthValue: monthData.sale
             });
           }
         });
-        
-        console.log('Gemini parsing successful:', convertedResults.length, 'agent-month records');
-        return convertedResults;
       }
-    } catch (geminiError) {
-      console.error('Gemini parsing failed:', geminiError.message);
-      
-      // If it's an API key issue, don't try fallback - maintain integrity
-      if (geminiError.message.includes('API key')) {
-        throw geminiError;
-      }
-    }
-
-    // Fallback: Use regex as assistant tool only if Gemini completely fails
-    console.log('Falling back to regex parsing as assistant tool...');
-    const regexResults = regexParsingAssist(text);
+    });
     
-    if (regexResults.length === 0) {
-      // If both methods fail, be honest about it
-      throw new Error('Unable to parse PDF content. The document format may not be supported or the content is not recognizable as a NAP report.');
-    }
-    
-    console.log('Regex fallback provided:', regexResults.length, 'potential matches');
-    return regexResults;
+    console.log('Gemini parsing successful:', convertedResults.length, 'agent-month records');
+    return convertedResults;
     
   } catch (error) {
     console.error('PDF parsing error:', error);
@@ -413,6 +374,23 @@ exports.getNapReports = async (req, res) => {
     res.json(allReports);
   } catch (err) {
     console.error('Get reports error:', err);
+    res.status(500).json({ error: err.message });
+  }
+};
+
+exports.clearNapReports = async (req, res) => {
+  try {
+    // Clear all stored NAP reports from memory
+    Object.keys(napReports).forEach(key => {
+      delete napReports[key];
+    });
+    
+    console.log('NAP reports table cleared by user');
+    res.json({ 
+      message: 'NAP reports table cleared successfully. You can now upload a new report.' 
+    });
+  } catch (err) {
+    console.error('Clear reports error:', err);
     res.status(500).json({ error: err.message });
   }
 };
