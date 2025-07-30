@@ -167,6 +167,50 @@ export default function NapReport() {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Export failed');
     }
+  };
+
+  const clearTable = async () => {
+    if (!window.confirm('Are you sure you want to clear all NAP report data? This action cannot be undone.')) {
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    setSuccess(null);
+
+    try {
+      const token = getToken();
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      const res = await fetch(buildApiUrl(API_ENDPOINTS.NAP_REPORT.BASE + '/clear'), {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || `Clear failed: ${res.status}`);
+      }
+
+      const result = await res.json();
+      setSuccess(result.message);
+      
+      // Clear local state
+      setData([]);
+      setAllReports([]);
+      setAvailableMonths([]);
+      setSelectedMonth('');
+      
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to clear table');
+    } finally {
+      setLoading(false);
+    }
   };  const handleMonthFilter = (month: string) => {
     setSelectedMonth(month);
     if (month) {
@@ -348,6 +392,17 @@ export default function NapReport() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4" />
                       </svg>
                       <span>Export All</span>
+                    </button>
+
+                    <button
+                      onClick={clearTable}
+                      disabled={allReports.length === 0 || loading}
+                      className="px-4 py-2 bg-gradient-to-r from-red-600 to-orange-600 text-white font-semibold rounded-lg hover:from-red-700 hover:to-orange-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 flex items-center space-x-2 text-sm"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                      <span>Clear Table</span>
                     </button>
                   </div>
                 </div>
