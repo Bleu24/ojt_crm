@@ -136,8 +136,26 @@ ${text}
     return validatedData;
 
   } catch (error) {
-    console.error('Gemini API error:', error);
-    throw new Error(`Gemini parsing failed: ${error.message}`);
+    console.error('Gemini API error details:', {
+      message: error.message,
+      stack: error.stack,
+      name: error.name
+    });
+    
+    // Provide specific error categorization for better debugging
+    if (error.message.includes('API key')) {
+      throw new Error(`API_KEY_ERROR: ${error.message}`);
+    } else if (error.message.includes('quota') || error.message.includes('limit')) {
+      throw new Error(`QUOTA_ERROR: Gemini API quota exceeded or rate limit reached. ${error.message}`);
+    } else if (error.message.includes('model') || error.message.includes('not found')) {
+      throw new Error(`MODEL_ERROR: Gemini model issue - ${error.message}`);
+    } else if (error.message.includes('JSON') || error.message.includes('parse')) {
+      throw new Error(`PARSING_ERROR: Gemini returned invalid JSON format - ${error.message}`);
+    } else if (error.message.includes('network') || error.message.includes('timeout')) {
+      throw new Error(`NETWORK_ERROR: Network issue connecting to Gemini API - ${error.message}`);
+    } else {
+      throw new Error(`GEMINI_AI_ERROR: Unexpected Gemini API failure - ${error.message}`);
+    }
   }
 }
 
@@ -171,7 +189,7 @@ async function parseNapPdf(fileUrlOrPath) {
     
     if (!geminiResults || geminiResults.length === 0) {
       console.log('DEBUGGING - PDF text first 2000 chars:', text.substring(0, 2000));
-      throw new Error('Unable to parse PDF content using Gemini AI. The document format may not be supported or the content is not recognizable as a NAP report.');
+      throw new Error('PARSING_FAILURE: Gemini AI was unable to extract valid agent data from the PDF. This could indicate: 1) The document is not a NAP report, 2) The PDF format is different than expected, or 3) The AI model failed to recognize the content structure.');
     }
     
     // Convert Gemini monthly format to flat format for backwards compatibility
@@ -204,8 +222,36 @@ async function parseNapPdf(fileUrlOrPath) {
     return convertedResults;
     
   } catch (error) {
-    console.error('PDF parsing error:', error);
-    throw error;
+    console.error('PDF parsing error details:', {
+      message: error.message,
+      stack: error.stack,
+      name: error.name,
+      fileUrl: fileUrlOrPath
+    });
+    
+    // Re-throw with more context for debugging
+    if (error.message.includes('PARSING_FAILURE') || 
+        error.message.includes('API_KEY_ERROR') || 
+        error.message.includes('QUOTA_ERROR') ||
+        error.message.includes('MODEL_ERROR') ||
+        error.message.includes('PARSING_ERROR') ||
+        error.message.includes('NETWORK_ERROR') ||
+        error.message.includes('GEMINI_AI_ERROR')) {
+      // These are already categorized errors, just re-throw
+      throw error;
+    }
+    
+    // Handle PDF reading errors
+    if (error.message.includes('ENOENT') || error.message.includes('no such file')) {
+      throw new Error('FILE_ERROR: PDF file not found or inaccessible');
+    }
+    
+    if (error.message.includes('Invalid PDF') || error.message.includes('PDF parse')) {
+      throw new Error('PDF_ERROR: The uploaded file is corrupted or not a valid PDF');
+    }
+    
+    // Generic error fallback
+    throw new Error(`PROCESSING_ERROR: ${error.message}`);
   }
 }
 
@@ -277,23 +323,87 @@ exports.uploadNapReport = async (req, res) => {
     });
     
   } catch (err) {
-    console.error('Upload error:', err);
+    console.error('Upload error details:', {
+      message: err.message,
+      stack: err.stack,
+      name: err.name
+    });
     
     // Provide specific error messages for different failure types
-    if (err.message.includes('API key')) {
+    if (err.message.includes('API_KEY_ERROR')) {
       return res.status(500).json({ 
-        error: 'Configuration error: Gemini API key not properly configured.' 
+        error: 'Configuration Error: Gemini API key not properly configured. Please contact system administrator.',
+        errorType: 'API_KEY_ERROR'
       });
     }
     
-    if (err.message.includes('not supported') || err.message.includes('not recognizable')) {
+    if (err.message.includes('QUOTA_ERROR')) {
+      return res.status(429).json({ 
+        error: 'Service Temporarily Unavailable: AI service quota exceeded. Please try again later.',
+        errorType: 'QUOTA_ERROR'
+      });
+    }
+    
+    if (err.message.includes('MODEL_ERROR')) {
+      return res.status(503).json({ 
+        error: 'AI Model Error: The AI model is currently unavailable. Please try again later.',
+        errorType: 'MODEL_ERROR'
+      });
+    }
+    
+    if (err.message.includes('PARSING_ERROR')) {
+      return res.status(422).json({ 
+        error: 'AI Response Error: The AI returned an invalid response format. This may indicate the document structure is too complex.',
+        errorType: 'PARSING_ERROR'
+      });
+    }
+    
+    if (err.message.includes('NETWORK_ERROR')) {
+      return res.status(503).json({ 
+        error: 'Network Error: Unable to connect to AI service. Please check your internet connection and try again.',
+        errorType: 'NETWORK_ERROR'
+      });
+    }
+    
+    if (err.message.includes('PARSING_FAILURE')) {
+      return res.status(422).json({ 
+        error: 'Document Parsing Failed: The AI could not extract valid data from this document. Please ensure this is a properly formatted NAP report.',
+        errorType: 'PARSING_FAILURE'
+      });
+    }
+    
+    if (err.message.includes('GEMINI_AI_ERROR')) {
+      return res.status(500).json({ 
+        error: 'AI Processing Error: An unexpected error occurred with the AI service. Please try again or contact support.',
+        errorType: 'GEMINI_AI_ERROR'
+      });
+    }
+    
+    if (err.message.includes('FILE_ERROR')) {
+      return res.status(404).json({ 
+        error: 'File Error: The uploaded PDF file could not be accessed or found.',
+        errorType: 'FILE_ERROR'
+      });
+    }
+    
+    if (err.message.includes('PDF_ERROR')) {
       return res.status(400).json({ 
-        error: 'The uploaded file does not appear to be a valid NAP report or the format is not supported.' 
+        error: 'Invalid PDF: The uploaded file is corrupted or not a valid PDF document.',
+        errorType: 'PDF_ERROR'
       });
     }
     
+    if (err.message.includes('PROCESSING_ERROR')) {
+      return res.status(500).json({ 
+        error: 'Processing Error: An unexpected error occurred while processing the document.',
+        errorType: 'PROCESSING_ERROR'
+      });
+    }
+    
+    // Generic fallback for unknown errors
     res.status(500).json({ 
-      error: `Failed to process NAP report: ${err.message}` 
+      error: `Failed to process NAP report: ${err.message}`,
+      errorType: 'UNKNOWN_ERROR'
     });
   }
 };
