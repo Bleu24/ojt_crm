@@ -28,13 +28,13 @@ export default function Home() {
           <div className="absolute inset-0 bg-gradient-to-r from-purple-600/20 to-pink-600/20 rounded-2xl sm:rounded-3xl blur opacity-75 group-hover:opacity-100 transition-opacity"></div>
           <div className="relative backdrop-blur-xl bg-white/10 border border-white/20 rounded-2xl sm:rounded-3xl p-8 sm:p-12 hover:bg-white/15 transition-all duration-300">
             <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-purple-400 to-pink-400 rounded-xl sm:rounded-2xl mx-auto mb-4 sm:mb-6 flex items-center justify-center">
-              <span className="text-white font-bold text-2xl sm:text-3xl">C</span>
+              <span className="text-white font-bold text-2xl sm:text-3xl">TB</span>
             </div>
             <h1 className="text-3xl sm:text-4xl md:text-6xl font-bold text-white mb-3 sm:mb-4">
-              CRM System
+              TeamBabe TMS
             </h1>
             <p className="text-base sm:text-xl text-gray-300 mb-6 sm:mb-8 max-w-2xl mx-auto px-4">
-              Manage your customer relationships, track recruits, and analyze your business performance with our modern CRM dashboard.
+              Comprehensive Team Management System for recruiting, managing interviews, and tracking team performance with modern efficiency.
             </p>
             <button 
               onClick={handleLaunchDashboard}
@@ -51,9 +51,9 @@ export default function Home() {
         {/* Feature Cards */}
         <div className="mt-12 sm:mt-16 grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 max-w-4xl mx-auto">
           {[
-            { title: 'User Management', icon: '👥', desc: 'Manage users and their roles efficiently' },
-            { title: 'Recruit Tracking', icon: '🎯', desc: 'Track and manage recruitment processes' },
-            { title: 'Analytics', icon: '📊', desc: 'Comprehensive business analytics and reports' },
+            { title: 'Team Management', icon: '👥', desc: 'Manage team members, roles and permissions' },
+            { title: 'Recruitment System', icon: '🎯', desc: 'Streamlined interview scheduling and tracking' },
+            { title: 'Performance Analytics', icon: '📊', desc: 'Team performance metrics and reporting' },
           ].map((feature, index) => (
             <div key={index} className="group relative">
               <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-purple-600/20 rounded-xl blur opacity-75 group-hover:opacity-100 transition-opacity"></div>
