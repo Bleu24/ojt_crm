@@ -28,7 +28,7 @@ async function sendTextToGeminiForParsing(text) {
       throw new Error('Gemini API key not configured. Please set GEMINI_API_KEY in your .env file.');
     }
 
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
 
     const prompt = `
 You are a data extraction specialist. Parse this NAP (New Business) insurance report and extract agent performance data.
