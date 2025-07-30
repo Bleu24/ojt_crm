@@ -557,6 +557,34 @@ exports.exportNapReport = async (req, res) => {
         });
       });
 
+      // Calculate grand totals for all agents
+      const grandTotals = Object.values(agentTotals).reduce((totals, agent) => {
+        totals.totalCC += agent.totalCC;
+        totals.totalSale += agent.totalSale;
+        totals.totalLapsed += agent.totalLapsed;
+        return totals;
+      }, { totalCC: 0, totalSale: 0, totalLapsed: 0 });
+
+      // Add empty row for separation
+      worksheet.addRow({});
+
+      // Add grand totals row
+      const totalsRow = worksheet.addRow({
+        name: 'GRAND TOTALS',
+        totalCC: grandTotals.totalCC,
+        totalSale: Math.round(grandTotals.totalSale * 100) / 100,
+        totalLapsed: Math.round(grandTotals.totalLapsed * 100) / 100,
+        monthsCovered: 'All Months'
+      });
+
+      // Style the totals row
+      totalsRow.font = { bold: true };
+      totalsRow.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFFFD700' } // Gold background
+      };
+
       const buffer = await workbook.xlsx.writeBuffer();
       res.setHeader('Content-Disposition', 'attachment; filename=nap-report-all-months.xlsx');
       res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
@@ -576,6 +604,7 @@ exports.exportNapReport = async (req, res) => {
         { header: 'LAPSED', key: 'lapsed', width: 10 },
       ];
 
+      // Add data rows
       napReports[month].forEach(row => {
         worksheet.addRow({
           name: row.name,
@@ -585,6 +614,34 @@ exports.exportNapReport = async (req, res) => {
           lapsed: row.lapsed
         });
       });
+
+      // Calculate totals for the month
+      const monthTotals = napReports[month].reduce((totals, row) => {
+        totals.totalCC += row.cc || 0;
+        totals.totalSale += row.credit || 0;
+        totals.totalLapsed += (typeof row.lapsed === 'number' ? row.lapsed : 0);
+        return totals;
+      }, { totalCC: 0, totalSale: 0, totalLapsed: 0 });
+
+      // Add empty row for separation
+      worksheet.addRow({});
+
+      // Add totals row
+      const totalsRow = worksheet.addRow({
+        name: 'TOTALS',
+        month: month,
+        cc: monthTotals.totalCC,
+        credit: Math.round(monthTotals.totalSale * 100) / 100,
+        lapsed: Math.round(monthTotals.totalLapsed * 100) / 100
+      });
+
+      // Style the totals row
+      totalsRow.font = { bold: true };
+      totalsRow.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFFFD700' } // Gold background
+      };
 
       const buffer = await workbook.xlsx.writeBuffer();
       res.setHeader('Content-Disposition', `attachment; filename=nap-report-${month}.xlsx`);
