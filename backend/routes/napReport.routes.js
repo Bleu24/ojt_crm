@@ -7,5 +7,6 @@ const controller = require('../controllers/napReport.controller');
 router.post('/upload', authenticateToken, requireRole(['unit_manager','admin']), controller.uploadPdf, controller.uploadNapReport);
 router.get('/', authenticateToken, requireRole(['unit_manager','admin']), controller.getNapReports);
 router.get('/export', authenticateToken, requireRole(['unit_manager','admin']), controller.exportNapReport);
+router.delete('/clear', authenticateToken, requireRole(['unit_manager','admin']), controller.clearNapReports);
 
 module.exports = router;
