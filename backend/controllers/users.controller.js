@@ -242,3 +242,133 @@ exports.getTeamStatus = async (req, res) => {
   }
 };
 
+// Set required hours for an intern (only interns and their supervisors can do this)
+exports.setRequiredHours = async (req, res) => {
+  try {
+    const { requiredHours } = req.body;
+    const { userId } = req.params;
+
+    // Validate required hours
+    if (!requiredHours || requiredHours <= 0) {
+      return res.status(400).json({ error: 'Required hours must be a positive number' });
+    }
+
+    // Find the user
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Only interns can have required hours
+    if (user.role !== 'intern') {
+      return res.status(400).json({ error: 'Only interns can have required hours set' });
+    }
+
+    // Check authorization - intern can set their own, or their supervisor can set it
+    const canModify = (req.user.userId === userId) || 
+                     (user.supervisorId && user.supervisorId.toString() === req.user.userId) ||
+                     (req.user.role === 'admin');
+
+    if (!canModify) {
+      return res.status(403).json({ error: 'Unauthorized to modify required hours' });
+    }
+
+    user.requiredHours = requiredHours;
+    await user.save();
+
+    res.json({ 
+      message: 'Required hours updated successfully', 
+      user: { 
+        _id: user._id, 
+        name: user.name, 
+        role: user.role, 
+        requiredHours: user.requiredHours 
+      } 
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// Get total hours worked for a user
+exports.getTotalHoursWorked = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    // Find the user
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Check authorization - user can view their own, or their supervisor can view it
+    const canView = (req.user.userId === userId) || 
+                   (user.supervisorId && user.supervisorId.toString() === req.user.userId) ||
+                   (req.user.role === 'admin');
+
+    if (!canView) {
+      return res.status(403).json({ error: 'Unauthorized to view hours' });
+    }
+
+    // Calculate total hours worked
+    const entries = await DtrEntry.find({ userId });
+    const totalHours = entries.reduce((total, entry) => total + (entry.hoursWorked || 0), 0);
+
+    res.json({
+      userId,
+      userName: user.name,
+      role: user.role,
+      requiredHours: user.requiredHours,
+      totalHoursWorked: totalHours,
+      isComplete: user.role === 'intern' && user.requiredHours > 0 ? totalHours >= user.requiredHours : null
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// Get team hours summary for unit managers
+exports.getTeamHoursSummary = async (req, res) => {
+  try {
+    if (req.user.role !== 'unit_manager' && req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Unauthorized' });
+    }
+
+    // Get supervised users
+    const supervisedUsers = await User.find({ 
+      supervisorId: req.user.userId 
+    }).select('-passwordHash');
+
+    if (supervisedUsers.length === 0) {
+      return res.json({ teamMembers: [] });
+    }
+
+    // Get DTR entries for all supervised users
+    const userIds = supervisedUsers.map(user => user._id);
+    const allEntries = await DtrEntry.find({
+      userId: { $in: userIds }
+    });
+
+    // Calculate hours for each team member
+    const teamHoursSummary = supervisedUsers.map(user => {
+      const userEntries = allEntries.filter(entry => entry.userId.toString() === user._id.toString());
+      const totalHours = userEntries.reduce((total, entry) => total + (entry.hoursWorked || 0), 0);
+      
+      return {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        requiredHours: user.requiredHours,
+        totalHoursWorked: totalHours,
+        isComplete: user.role === 'intern' && user.requiredHours > 0 ? totalHours >= user.requiredHours : null
+      };
+    });
+
+    res.json({ teamMembers: teamHoursSummary });
+  } catch (err) {
+    console.error('Error fetching team hours summary:', err);
+    res.status(500).json({ error: err.message });
+  }
+};
+
