@@ -224,7 +224,27 @@ export default function DTRSystem() {
   };
 
   const formatDate = (date: string) => {
-    return new Date(date).toLocaleDateString('en-US', {
+    if (!date) return 'Invalid Date';
+    
+    // Parse the date string more carefully to avoid timezone issues
+    let dateObj: Date;
+    
+    if (date.includes('T')) {
+      // ISO datetime string
+      dateObj = new Date(date);
+    } else {
+      // Date-only string (YYYY-MM-DD) - parse as local date to avoid timezone shift
+      const [year, month, day] = date.split('-').map(Number);
+      if (year && month && day) {
+        dateObj = new Date(year, month - 1, day); // month is 0-indexed
+      } else {
+        dateObj = new Date(date);
+      }
+    }
+    
+    if (isNaN(dateObj.getTime())) return 'Invalid Date';
+    
+    return dateObj.toLocaleDateString('en-US', {
       weekday: 'short',
       month: 'short',
       day: 'numeric',
