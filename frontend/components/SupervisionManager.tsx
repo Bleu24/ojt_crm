@@ -174,7 +174,15 @@ export default function SupervisionManager() {
   );
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
+    // Parse date-only strings as local dates to avoid timezone issues
+    const date = dateString.includes('T') ? 
+      new Date(dateString) : 
+      (() => {
+        const [year, month, day] = dateString.split('-').map(Number);
+        return new Date(year, month - 1, day);
+      })();
+      
+    return date.toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
       year: 'numeric'
