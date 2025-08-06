@@ -134,12 +134,20 @@ export default function AnalyticsDashboard() {
     }
 
     return {
-      labels: analyticsData.teamProductivity.map(item => 
-        new Date(item.date).toLocaleDateString('en-US', { 
+      labels: analyticsData.teamProductivity.map(item => {
+        // Parse date-only strings as local dates to avoid timezone issues
+        const date = item.date.includes('T') ? 
+          new Date(item.date) : 
+          (() => {
+            const [year, month, day] = item.date.split('-').map(Number);
+            return new Date(year, month - 1, day);
+          })();
+          
+        return date.toLocaleDateString('en-US', { 
           month: 'short', 
           day: 'numeric' 
-        })
-      ),
+        });
+      }),
       datasets: [
         {
           label: 'Team Productivity (%)',
