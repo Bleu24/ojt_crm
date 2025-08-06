@@ -505,8 +505,16 @@ export default function RecruitsManagement() {
     }
     
     if (recruit.finalInterviewDate && !recruit.finalInterviewCompleted) {
+      // Parse date-only strings as local dates to avoid timezone issues
+      const date = recruit.finalInterviewDate.includes('T') ? 
+        new Date(recruit.finalInterviewDate) : 
+        (() => {
+          const [year, month, day] = recruit.finalInterviewDate.split('-').map(Number);
+          return new Date(year, month - 1, day);
+        })();
+        
       return {
-        text: `Final: ${new Date(recruit.finalInterviewDate).toLocaleDateString()} ${recruit.finalInterviewTime}`,
+        text: `Final: ${date.toLocaleDateString()} ${recruit.finalInterviewTime}`,
         subText: recruit.finalInterviewer?.name,
         canSchedule: currentUser.role === 'unit_manager' && recruit.finalInterviewAssignedTo?._id === currentUser.userId
       };
@@ -524,8 +532,16 @@ export default function RecruitsManagement() {
     }
     
     if (recruit.initialInterviewDate && !recruit.initialInterviewCompleted) {
+      // Parse date-only strings as local dates to avoid timezone issues
+      const date = recruit.initialInterviewDate.includes('T') ? 
+        new Date(recruit.initialInterviewDate) : 
+        (() => {
+          const [year, month, day] = recruit.initialInterviewDate.split('-').map(Number);
+          return new Date(year, month - 1, day);
+        })();
+        
       return {
-        text: `Initial: ${new Date(recruit.initialInterviewDate).toLocaleDateString()} ${recruit.initialInterviewTime}`,
+        text: `Initial: ${date.toLocaleDateString()} ${recruit.initialInterviewTime}`,
         subText: recruit.initialInterviewer?.name,
         canSchedule: ['intern', 'staff'].includes(currentUser.role)
       };
