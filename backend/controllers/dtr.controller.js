@@ -1,6 +1,7 @@
 const DtrEntry = require('../models/DtrEntry.model');
 const User = require('../models/User.model');
 const { DateTime } = require('luxon');
+const { createHoursCompletionNotification, createMilestoneNotification } = require('./notifications.controller');
 
 // Create new DTR entry (Admin only)
 exports.createDtrEntry = async (req, res) => {
@@ -41,23 +42,35 @@ exports.getMyDtrEntries = async (req, res) => {
 exports.timeIn = async (req, res) => {
   try {
     const userId = req.user.userId;
-    const today = DateTime.now().setZone('Asia/Manila').toISODate(); // "2025-06-28"
+    const today = DateTime.now().setZone('Asia/Manila').toISODate(); // "2025-08-06"
 
-    const existing = await DtrEntry.findOne({
+    // Parse as local date to avoid timezone issues
+    const [year, month, day] = today.split('-').map(Number);
+    const todayDate = new Date(year, month - 1, day);
+
+    // Check if user has already clocked in today (regardless of clock out status)
+    const startOfDay = new Date(year, month - 1, day, 0, 0, 0, 0);
+    const endOfDay = new Date(year, month - 1, day, 23, 59, 59, 999);
+    
+    const existingEntry = await DtrEntry.findOne({
       userId,
-      date: new Date(today)
+      date: { $gte: startOfDay, $lte: endOfDay }
     });
 
-    if (existing) return res.status(400).json({ message: 'Already timed in today.' });
+    if (existingEntry) {
+      return res.status(400).json({ 
+        message: 'You have already clocked in today. Please wait until tomorrow to clock in again.' 
+      });
+    }
 
     const newEntry = new DtrEntry({
       userId,
-      date: new Date(today),
+      date: todayDate,
       timeIn: new Date()
     });
 
     await newEntry.save();
-    res.status(201).json({ message: 'Time in logged.', entry: newEntry });
+    res.status(201).json({ message: 'Time in logged successfully.', entry: newEntry });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -87,8 +100,87 @@ exports.timeOut = async (req, res) => {
     entry.accomplishment = req.body.accomplishment || 'No notes provided';
 
     await entry.save();
+
+    // Check for hours completion/milestone notifications
+    await checkHoursNotifications(userId);
+
     res.json({ message: 'Time out logged.', entry });
   } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// Import DTR entry (for bulk import functionality)
+exports.importDtrEntry = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { date, timeIn, timeOut, hoursWorked, accomplishment } = req.body;
+
+    // Validate required fields
+    if (!date || !timeIn) {
+      return res.status(400).json({ error: 'Date and timeIn are required' });
+    }
+
+    // Parse dates - handle date-only strings as local dates to avoid timezone issues
+    let entryDate;
+    if (date.includes('T') || date.includes(' ')) {
+      entryDate = new Date(date);
+    } else {
+      // Date-only string like "2024-06-23", parse as local date
+      const [year, month, day] = date.split('-').map(Number);
+      entryDate = new Date(year, month - 1, day);
+    }
+    
+    const timeInDate = new Date(timeIn);
+    let timeOutDate = null;
+    
+    if (timeOut) {
+      timeOutDate = new Date(timeOut);
+    }
+
+    // Validate dates
+    if (isNaN(entryDate.getTime()) || isNaN(timeInDate.getTime())) {
+      return res.status(400).json({ error: 'Invalid date format' });
+    }
+
+    if (timeOut && isNaN(timeOutDate?.getTime())) {
+      return res.status(400).json({ error: 'Invalid timeOut format' });
+    }
+
+    // Check if entry already exists (to prevent duplicates)
+    const startOfDay = new Date(entryDate.getFullYear(), entryDate.getMonth(), entryDate.getDate());
+    const endOfDay = new Date(entryDate.getFullYear(), entryDate.getMonth(), entryDate.getDate() + 1);
+    
+    const existingEntry = await DtrEntry.findOne({
+      userId,
+      date: { $gte: startOfDay, $lt: endOfDay },
+      timeIn: timeInDate
+    });
+
+    if (existingEntry) {
+      return res.status(409).json({ error: 'DTR entry already exists for this date and time' });
+    }
+
+    // Create new DTR entry
+    const newEntry = new DtrEntry({
+      userId,
+      date: entryDate,
+      timeIn: timeInDate,
+      timeOut: timeOutDate,
+      hoursWorked: hoursWorked || 0,
+      accomplishment: accomplishment || ''
+    });
+
+    await newEntry.save();
+
+    // Check for hours notifications if this is a completed entry (has timeOut)
+    if (timeOutDate) {
+      await checkHoursNotifications(userId);
+    }
+
+    res.status(201).json({ message: 'DTR entry imported successfully', entry: newEntry });
+  } catch (err) {
+    console.error('Error importing DTR entry:', err);
     res.status(500).json({ error: err.message });
   }
 };
@@ -127,5 +219,41 @@ exports.getAccomplishments = async (req, res) => {
   } catch (err) {
     console.error('Error fetching accomplishments:', err);
     res.status(500).json({ error: err.message });
+  }
+};
+
+// Helper function to check and create notifications for hours milestones
+const checkHoursNotifications = async (userId) => {
+  try {
+    const user = await User.findById(userId);
+    if (!user || user.role !== 'intern' || !user.requiredHours || user.requiredHours <= 0) {
+      return; // Only check for interns with required hours set
+    }
+
+    // Calculate total hours worked
+    const entries = await DtrEntry.find({ userId });
+    const totalHours = entries.reduce((total, entry) => total + (entry.hoursWorked || 0), 0);
+    
+    const percentage = Math.floor((totalHours / user.requiredHours) * 100);
+    const previousTotalHours = totalHours - (entries[entries.length - 1]?.hoursWorked || 0);
+    const previousPercentage = Math.floor((previousTotalHours / user.requiredHours) * 100);
+
+    // Check if user just completed their hours
+    if (totalHours >= user.requiredHours && previousTotalHours < user.requiredHours) {
+      await createHoursCompletionNotification(userId, totalHours, user.requiredHours);
+    }
+    // Check for milestone notifications (25%, 50%, 75%, 90%)
+    else {
+      const milestones = [25, 50, 75, 90];
+      for (const milestone of milestones) {
+        if (percentage >= milestone && previousPercentage < milestone) {
+          await createMilestoneNotification(userId, milestone, totalHours, user.requiredHours);
+          break; // Only send one milestone notification per session
+        }
+      }
+    }
+  } catch (err) {
+    console.error('Error checking hours notifications:', err);
+    // Don't throw error - notification failure shouldn't break DTR functionality
   }
 };
