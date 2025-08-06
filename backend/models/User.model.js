@@ -21,6 +21,12 @@ const userSchema = new mongoose.Schema({
     ref: 'User', // their direct manager
     default: null
   },
+  requiredHours: {
+    type: Number,
+    default: function() {
+      return this.role === 'intern' ? 0 : null;
+    }
+  },
   passwordHash: {
     type: String,
     required: true,
