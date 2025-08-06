@@ -38,7 +38,14 @@ export default function TeamStatus() {
 
   // Format date for display
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
+    // Parse date-only strings as local dates to avoid timezone issues
+    const date = dateString.includes('T') ? 
+      new Date(dateString) : 
+      (() => {
+        const [year, month, day] = dateString.split('-').map(Number);
+        return new Date(year, month - 1, day);
+      })();
+      
     return date.toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
