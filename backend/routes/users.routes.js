@@ -21,4 +21,9 @@ router.get('/team-status', authenticateToken, requireRole(['unit_manager', 'admi
 router.patch('/:userId/assign-supervisor', authenticateToken, requireRole(['unit_manager', 'admin']), userController.assignSupervisor);
 router.patch('/:userId/remove-supervisor', authenticateToken, requireRole(['unit_manager', 'admin']), userController.removeSupervisor);
 
+// Required hours management routes
+router.patch('/:userId/required-hours', authenticateToken, userController.setRequiredHours);
+router.get('/:userId/total-hours', authenticateToken, userController.getTotalHoursWorked);
+router.get('/team-hours-summary', authenticateToken, requireRole(['unit_manager', 'admin']), userController.getTeamHoursSummary);
+
 module.exports = router;
