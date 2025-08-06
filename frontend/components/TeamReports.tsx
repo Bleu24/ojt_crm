@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { API_BASE_URL } from '@/config/api';
 import { getToken } from '@/utils/auth';
+import TeamHoursSummary from './TeamHoursSummary';
 
 interface TeamMember {
   _id: string;
@@ -68,7 +69,15 @@ export default function TeamReports() {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
+    // Parse date-only strings as local dates to avoid timezone issues
+    const date = dateString.includes('T') ? 
+      new Date(dateString) : 
+      (() => {
+        const [year, month, day] = dateString.split('-').map(Number);
+        return new Date(year, month - 1, day);
+      })();
+    
+    return date.toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
       year: 'numeric'
@@ -291,6 +300,9 @@ export default function TeamReports() {
               </table>
             </div>
           </div>
+
+          {/* Team Hours Summary */}
+          <TeamHoursSummary />
 
           {/* Export Options */}
           <div className="bg-white/5 backdrop-blur-xl rounded-xl p-4 sm:p-6 border border-white/10">
