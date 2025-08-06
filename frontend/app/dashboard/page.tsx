@@ -3,6 +3,8 @@
 import { useState, useEffect, useRef } from "react";
 import AuthGuard from "@/components/AuthGuard";
 import DTRSystem from "@/components/DTRSystem";
+import DTRHistory from "@/components/DTRHistory";
+import HoursManager from "@/components/HoursManager";
 import SupervisionManager from "@/components/SupervisionManager";
 import TeamReports from "@/components/TeamReports";
 import TeamStatus from "@/components/TeamStatus";
@@ -30,7 +32,7 @@ export default function Dashboard() {
       if (userData.role === 'staff') {
         setActiveTab('dtr');
       } else if (userData.role === 'intern') {
-        setActiveTab('recruits'); // Intern defaults to recruits tab
+        setActiveTab('hours'); // Intern defaults to hours tab
       } else if (userData.role === 'unit_manager') {
         setActiveTab('reports');
       }
@@ -272,19 +274,33 @@ export default function Dashboard() {
             ) : (
               // Staff/Intern navigation (DTR and Recruits for intern and staff)
               (user?.role === 'intern' || user?.role === 'staff') ? 
-                ['dtr', 'recruits', 'history'].map((tab) => (
-                  <button
-                    key={tab}
-                    onClick={() => setActiveTab(tab)}
-                    className={`py-3 sm:py-4 px-1 border-b-2 font-medium text-xs sm:text-sm capitalize transition-colors whitespace-nowrap ${
-                      activeTab === tab
-                        ? 'border-purple-400 text-purple-400'
-                        : 'border-transparent text-gray-400 hover:text-white hover:border-white/20'
-                    }`}
-                  >
-                    {tab === 'dtr' ? 'Time Record' : tab}
-                  </button>
-                )) :
+                user?.role === 'intern' 
+                  ? ['dtr', 'recruits', 'hours', 'history'].map((tab) => (
+                    <button
+                      key={tab}
+                      onClick={() => setActiveTab(tab)}
+                      className={`py-3 sm:py-4 px-1 border-b-2 font-medium text-xs sm:text-sm capitalize transition-colors whitespace-nowrap ${
+                        activeTab === tab
+                          ? 'border-purple-400 text-purple-400'
+                          : 'border-transparent text-gray-400 hover:text-white hover:border-white/20'
+                      }`}
+                    >
+                      {tab === 'dtr' ? 'Time Record' : tab}
+                    </button>
+                  ))
+                  : ['dtr', 'recruits', 'history'].map((tab) => (
+                    <button
+                      key={tab}
+                      onClick={() => setActiveTab(tab)}
+                      className={`py-3 sm:py-4 px-1 border-b-2 font-medium text-xs sm:text-sm capitalize transition-colors whitespace-nowrap ${
+                        activeTab === tab
+                          ? 'border-purple-400 text-purple-400'
+                          : 'border-transparent text-gray-400 hover:text-white hover:border-white/20'
+                      }`}
+                    >
+                      {tab === 'dtr' ? 'Time Record' : tab}
+                    </button>
+                  )) :
                 // Other staff/intern roles (DTR only)
                 ['dtr', 'history'].map((tab) => (
                   <button
@@ -418,22 +434,8 @@ export default function Dashboard() {
           <>
             {activeTab === 'dtr' && <DTRSystem />}
             {activeTab === 'recruits' && <RecruitsManagement />}
-            {activeTab === 'history' && (
-              <div className="group relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-purple-600/20 rounded-xl blur opacity-75 group-hover:opacity-100 transition-opacity"></div>
-                <div className="relative backdrop-blur-xl bg-white/10 border border-white/20 rounded-xl p-6">
-                  <h3 className="text-xl font-semibold text-white mb-4">Work History</h3>
-                  <div className="text-center text-gray-400 py-8">
-                    <div className="w-16 h-16 bg-gradient-to-br from-purple-400 to-pink-400 rounded-full mx-auto mb-4 flex items-center justify-center">
-                      <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-                      </svg>
-                    </div>
-                    <p className="text-base">Detailed work history and reports will be available here</p>
-                  </div>
-                </div>
-              </div>
-            )}
+            {activeTab === 'hours' && user?.role === 'intern' && <HoursManager />}
+            {activeTab === 'history' && <DTRHistory />}
           </>
         )}
       </main>
