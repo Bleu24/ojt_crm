@@ -42,7 +42,8 @@ exports.getMyDtrEntries = async (req, res) => {
 exports.timeIn = async (req, res) => {
   try {
     const userId = req.user.userId;
-    const today = DateTime.now().setZone('Asia/Manila').toISODate(); // "2025-08-06"
+    const now = DateTime.now().setZone('Asia/Manila');
+    const today = now.toISODate(); // "2025-08-08"
 
     // Parse as local date to avoid timezone issues
     const [year, month, day] = today.split('-').map(Number);
@@ -52,26 +53,39 @@ exports.timeIn = async (req, res) => {
     const startOfDay = new Date(year, month - 1, day, 0, 0, 0, 0);
     const endOfDay = new Date(year, month - 1, day, 23, 59, 59, 999);
     
+    console.log('🔍 Checking for existing entry:', {
+      userId,
+      startOfDay: startOfDay.toISOString(),
+      endOfDay: endOfDay.toISOString()
+    });
+    
     const existingEntry = await DtrEntry.findOne({
       userId,
       date: { $gte: startOfDay, $lte: endOfDay }
     });
 
     if (existingEntry) {
+      console.log('⚠️ Existing entry found:', existingEntry);
       return res.status(400).json({ 
-        message: 'You have already clocked in today. Please wait until tomorrow to clock in again.' 
+        message: 'You have already clocked in today. Please wait until tomorrow to clock in again.',
+        entry: existingEntry
       });
     }
+
+    // Use Philippine time for timeIn
+    const philippineTimeIn = now.toJSDate();
 
     const newEntry = new DtrEntry({
       userId,
       date: todayDate,
-      timeIn: new Date()
+      timeIn: philippineTimeIn
     });
 
     await newEntry.save();
+    console.log('✅ New DTR entry created:', newEntry);
     res.status(201).json({ message: 'Time in logged successfully.', entry: newEntry });
   } catch (err) {
+    console.error('❌ Error in timeIn:', err);
     res.status(500).json({ error: err.message });
   }
 };
@@ -80,22 +94,39 @@ exports.timeIn = async (req, res) => {
 exports.timeOut = async (req, res) => {
   try {
     const userId = req.user.userId;
-    const today = new Date().toISOString().slice(0, 10);
+    const now = DateTime.now().setZone('Asia/Manila');
+    const today = now.toISODate(); // "2025-08-08"
+
+    // Parse as local date to avoid timezone issues
+    const [year, month, day] = today.split('-').map(Number);
+    const startOfDay = new Date(year, month - 1, day, 0, 0, 0, 0);
+    const endOfDay = new Date(year, month - 1, day, 23, 59, 59, 999);
+
+    console.log('🔍 Looking for active DTR entry:', {
+      userId,
+      startOfDay: startOfDay.toISOString(),
+      endOfDay: endOfDay.toISOString()
+    });
 
     const entry = await DtrEntry.findOne({
       userId,
-      date: { $gte: new Date(today), $lt: new Date(`${today}T23:59:59Z`) },
+      date: { $gte: startOfDay, $lte: endOfDay },
       timeOut: null
     });
 
-    if (!entry) return res.status(400).json({ message: 'No active DTR entry for today.' });
+    if (!entry) {
+      console.log('❌ No active DTR entry found');
+      return res.status(400).json({ message: 'No active DTR entry for today.' });
+    }
 
-    const now = new Date();
+    console.log('✅ Found active entry:', entry);
+
+    const timeOutTime = now.toJSDate();
     const timeIn = new Date(entry.timeIn);
-    const workedMs = now - timeIn;
+    const workedMs = timeOutTime - timeIn;
     const hoursWorked = workedMs / (1000 * 60 * 60);
 
-    entry.timeOut = now;
+    entry.timeOut = timeOutTime;
     entry.hoursWorked = parseFloat(hoursWorked.toFixed(2));
     entry.accomplishment = req.body.accomplishment || 'No notes provided';
 
