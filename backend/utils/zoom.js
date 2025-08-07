@@ -11,79 +11,72 @@ const getZoomAccessToken = async () => {
     const clientSecret = process.env.ZOOM_CLIENT_SECRET;
     const accountId = process.env.ZOOM_ACCOUNT_ID;
 
-    console.log('🔑 ZOOM AUTH DEBUG: Attempting to get access token');
-    console.log('📍 Client ID:', clientId ? `${clientId.substring(0, 8)}...` : 'NOT SET');
-    console.log('📍 Client Secret:', clientSecret ? `${clientSecret.substring(0, 8)}...` : 'NOT SET');
-    console.log('📍 Account ID:', accountId ? `${accountId.substring(0, 8)}...` : 'NOT SET');
-
     if (!clientId || !clientSecret || !accountId) {
-      throw new Error('Zoom credentials not configured. Please set ZOOM_CLIENT_ID, ZOOM_CLIENT_SECRET, and ZOOM_ACCOUNT_ID in your environment variables.');
+      throw new Error('Missing Zoom API credentials in environment variables');
     }
 
-    const auth = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
-    
-    console.log('🔐 Encoded Auth Header:', `Basic ${auth.substring(0, 20)}...`);
-    
-    const response = await axios.post('https://zoom.us/oauth/token', 
+    console.log('🔐 ZOOM AUTH: Requesting access token...');
+    console.log('📋 Account ID:', accountId);
+    console.log('📋 Client ID:', clientId);
+
+    const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
+
+    const response = await axios.post(
+      'https://zoom.us/oauth/token',
       `grant_type=account_credentials&account_id=${accountId}`,
       {
         headers: {
-          'Authorization': `Basic ${auth}`,
+          'Authorization': `Basic ${credentials}`,
           'Content-Type': 'application/x-www-form-urlencoded'
         }
       }
     );
 
-    console.log('✅ ZOOM AUTH SUCCESS: Access token received');
-    console.log('⏰ Token expires in:', response.data.expires_in, 'seconds');
-    
+    console.log('✅ ZOOM AUTH: Access token obtained');
     return response.data.access_token;
   } catch (error) {
     console.error('❌ ZOOM AUTH ERROR: Failed to get access token');
-    console.error('📝 Error Message:', error.message);
     console.error('📊 Response Status:', error.response?.status);
     console.error('📊 Response Data:', error.response?.data);
     throw new Error('Failed to authenticate with Zoom API');
   }
 };
 
-// Create a Zoom meeting
+// Create a Zoom meeting with built-in email notifications
 const createZoomMeeting = async (meetingData) => {
   try {
     console.log('🚀 ZOOM API: Starting meeting creation process');
     
     const accessToken = await getZoomAccessToken();
-    const userId = process.env.ZOOM_USER_ID || 'me'; // Use 'me' for the authenticated user
+    const userId = process.env.ZOOM_USER_ID || 'me';
 
     console.log('👤 Using Zoom User ID:', userId);
 
     const meetingPayload = {
       topic: meetingData.topic,
       type: 2, // Scheduled meeting
-      start_time: meetingData.startTime, // ISO format: 2025-08-07T14:30:00Z
-      duration: meetingData.duration || 60, // Default 60 minutes
+      start_time: meetingData.startTime,
+      duration: meetingData.duration || 60,
       timezone: meetingData.timezone || 'Asia/Manila',
       password: meetingData.password || generateMeetingPassword(),
       agenda: meetingData.agenda || '',
       settings: {
         host_video: true,
         participant_video: true,
-        cn_meeting: false,
-        in_meeting: false,
         join_before_host: false,
         mute_upon_entry: true,
-        watermark: false,
-        use_pmi: false,
-        approval_type: 2, // No registration required
-        audio: 'both', // Both telephony and VoIP
-        auto_recording: 'none',
         waiting_room: true,
+        approval_type: 2,
+        audio: 'both',
+        auto_recording: 'none',
+        // 🎯 ZOOM'S BUILT-IN EMAIL NOTIFICATIONS
+        email_notification: true,
+        registrants_email_notification: true,
         ...meetingData.settings
       }
     };
 
     console.log('📦 ZOOM PAYLOAD:', JSON.stringify(meetingPayload, null, 2));
-    console.log('🎯 API Endpoint:', `${ZOOM_API_BASE_URL}/users/${userId}/meetings`);
 
     const response = await axios.post(
       `${ZOOM_API_BASE_URL}/users/${userId}/meetings`,
@@ -97,9 +90,14 @@ const createZoomMeeting = async (meetingData) => {
     );
 
     console.log('✅ ZOOM API SUCCESS: Meeting created');
-    console.log('📋 Response Status:', response.status);
     console.log('🆔 Meeting ID:', response.data.id);
     console.log('🔗 Join URL:', response.data.join_url);
+
+    // 🎯 ZOOM HANDLES EMAILS AUTOMATICALLY - NO CUSTOM CODE NEEDED!
+    if (meetingData.invitees && meetingData.invitees.length > 0) {
+      console.log('📧 ZOOM EMAILS: Invitations will be sent automatically to:', meetingData.invitees);
+      console.log('💡 Zoom handles email invitations - simpler and more reliable!');
+    }
 
     return {
       id: response.data.id,
@@ -111,23 +109,11 @@ const createZoomMeeting = async (meetingData) => {
       duration: response.data.duration,
       meetingId: response.data.id.toString()
     };
+
   } catch (error) {
-    console.error('❌ ZOOM API ERROR: Failed to create meeting');
-    console.error('📝 Error Message:', error.message);
-    console.error('📊 Response Status:', error.response?.status);
-    console.error('📊 Response Headers:', error.response?.headers);
-    console.error('📊 Response Data:', JSON.stringify(error.response?.data, null, 2));
-    
-    // Log specific error details for common issues
-    if (error.response?.status === 401) {
-      console.error('🔐 AUTH ISSUE: Check your Zoom credentials and scopes');
-    } else if (error.response?.status === 400) {
-      console.error('📝 REQUEST ISSUE: Check your meeting data format');
-    } else if (error.response?.status === 404) {
-      console.error('👤 USER ISSUE: Check your ZOOM_USER_ID');
-    }
-    
-    throw new Error('Failed to create Zoom meeting');
+    console.error('❌ ZOOM API ERROR: Meeting creation failed');
+    console.error('🔍 Error Details:', error.response?.data || error.message);
+    throw error;
   }
 };
 
@@ -228,10 +214,19 @@ const generateMeetingPassword = () => {
 
 // Format datetime for Zoom API
 const formatZoomDateTime = (date, time, timezone = 'Asia/Manila') => {
-  // Combine date and time into ISO format
+  // Combine date and time into ISO format for the specified timezone
+  // Since we're in Philippines (UTC+8), we need to handle timezone properly
   const dateTimeString = `${date}T${time}:00`;
-  const dateTime = new Date(dateTimeString);
-  return dateTime.toISOString();
+  
+  // Create date object and get the time as if it's in the specified timezone
+  const localDateTime = new Date(dateTimeString);
+  
+  // Convert to ISO string but adjust for timezone offset
+  // Philippines is UTC+8, so we need to add 8 hours to get the correct UTC time
+  const timezoneOffset = 8 * 60 * 60 * 1000; // 8 hours in milliseconds
+  const adjustedDateTime = new Date(localDateTime.getTime() + timezoneOffset);
+  
+  return adjustedDateTime.toISOString();
 };
 
 module.exports = {

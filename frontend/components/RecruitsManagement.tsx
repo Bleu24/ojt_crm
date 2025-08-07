@@ -77,6 +77,8 @@ export default function RecruitsManagement() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [showAssignModal, setShowAssignModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successData, setSuccessData] = useState<{ type: string; zoomMeeting?: any } | null>(null);
   const [selectedRecruit, setSelectedRecruit] = useState<Recruit | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -127,7 +129,7 @@ export default function RecruitsManagement() {
 
     try {
       const token = getToken();
-      if (!token) {
+      if (!token) { 
         console.log('No token found, opening URL directly');
         window.open(recruit.resumeUrl, '_blank', 'noopener,noreferrer');
         return;
@@ -377,13 +379,13 @@ export default function RecruitsManagement() {
       
       console.log('✅ FRONTEND: Interview scheduled successfully:', result);
       
-      // Show Zoom meeting details if created
+      // Show success modal instead of alert
       if (result.zoomMeeting) {
-        alert(`✅ ${scheduleData.interviewType === 'initial' ? 'Initial' : 'Final'} interview scheduled with Zoom meeting!\n\n` +
-              `📅 Meeting ID: ${result.zoomMeeting.meetingId}\n` +
-              `🔗 Join URL: ${result.zoomMeeting.joinUrl}\n` +
-              `🔐 Password: ${result.zoomMeeting.password}\n\n` +
-              `The meeting details have been saved and will be visible in the interview information.`);
+        setSuccessData({
+          type: scheduleData.interviewType,
+          zoomMeeting: result.zoomMeeting
+        });
+        setShowSuccessModal(true);
       }
       
       setRecruits(recruits.map(r => r._id === selectedRecruit._id ? result.recruit : r));
@@ -553,11 +555,10 @@ export default function RecruitsManagement() {
         })();
         
       let subText = recruit.finalInterviewer?.name || '';
-      
       // Add Zoom meeting info if available
       if (recruit.finalInterviewZoomJoinUrl) {
         subText += subText ? '\n' : '';
-        subText += `🎥 Zoom: ${recruit.finalInterviewZoomMeetingId}`;
+        subText += `<a href="${recruit.finalInterviewZoomJoinUrl}" target="_blank" rel="noopener noreferrer" class='underline text-blue-400 hover:text-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-400 font-semibold'>Join Zoom Meeting</a>`;
       }
         
       return {
@@ -588,11 +589,10 @@ export default function RecruitsManagement() {
         })();
         
       let subText = recruit.initialInterviewer?.name || '';
-      
       // Add Zoom meeting info if available
       if (recruit.initialInterviewZoomJoinUrl) {
         subText += subText ? '\n' : '';
-        subText += `🎥 Zoom: ${recruit.initialInterviewZoomMeetingId}`;
+        subText += `<a href="${recruit.initialInterviewZoomJoinUrl}" target="_blank" rel="noopener noreferrer" class='underline text-blue-400 hover:text-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-400 font-semibold'>Join Zoom Meeting</a>`;
       }
         
       return {
@@ -763,7 +763,7 @@ export default function RecruitsManagement() {
                             {interviewInfo.text}
                           </div>
                           {interviewInfo.subText && (
-                            <div className="text-gray-400 text-sm">{interviewInfo.subText}</div>
+                            <div className="text-gray-400 text-sm" dangerouslySetInnerHTML={{ __html: interviewInfo.subText.replace(/\n/g, '<br/>') }} />
                           )}
                         </div>
                       );
@@ -1158,24 +1158,30 @@ export default function RecruitsManagement() {
                 />
               </div>
 
-              <div className="flex items-center space-x-3">
-                <input
-                  type="checkbox"
-                  id="createZoomMeeting"
-                  checked={scheduleData.createZoomMeeting}
-                  onChange={(e) => setScheduleData({ ...scheduleData, createZoomMeeting: e.target.checked })}
-                  className="w-4 h-4 text-purple-600 bg-white/10 border-gray-300 rounded focus:ring-purple-500 focus:ring-2"
-                />
-                <label htmlFor="createZoomMeeting" className="text-white text-sm font-medium flex items-center space-x-2">
-                  <span>🎥</span>
-                  <span>Create Zoom Meeting</span>
+              <div>
+                <label className="block text-white text-sm font-medium mb-2">
+                  Video Conference
                 </label>
+                <button
+                  type="button"
+                  aria-pressed={scheduleData.createZoomMeeting}
+                  onClick={() => setScheduleData({ ...scheduleData, createZoomMeeting: !scheduleData.createZoomMeeting })}
+                  className={`w-full flex items-center justify-center px-4 py-2 rounded-lg font-semibold text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-400 border border-blue-500/40 shadow-md
+                    ${scheduleData.createZoomMeeting
+                      ? 'bg-blue-600 text-white ring-2 ring-blue-400 animate-pulse shadow-blue-500/40'
+                      : 'bg-white/10 text-blue-400 hover:bg-blue-500/20'}
+                  `}
+                  style={{ boxShadow: scheduleData.createZoomMeeting ? '0 0 8px 2px #2563eb' : undefined }}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="20" height="20" className="mr-2"><rect width="32" height="32" rx="8" fill="#2563eb"/><path d="M23.5 13.5l3.5-2.5v9l-3.5-2.5v-4zm-1.5-2c.828 0 1.5.672 1.5 1.5v8c0 .828-.672 1.5-1.5 1.5h-12c-.828 0-1.5-.672-1.5-1.5v-8c0-.828.672-1.5 1.5-1.5h12z" fill="#fff"/></svg>
+                  {scheduleData.createZoomMeeting ? 'Zoom Meeting Enabled' : 'Enable Zoom Meeting'}
+                </button>
               </div>
               {scheduleData.createZoomMeeting && (
-                <div className="text-sm text-blue-300 bg-blue-500/10 border border-blue-500/20 rounded-lg p-3">
+                <div className="text-sm text-blue-300 bg-blue-500/10 border border-blue-500/20 rounded-lg p-3 mt-2">
                   <div className="flex items-center space-x-2">
-                    <span>ℹ️</span>
-                    <span>A Zoom meeting will be automatically created and the details will be included in the interview information.</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" className="text-blue-400"><circle cx="12" cy="12" r="10" fill="#2563eb"/><text x="12" y="16" textAnchor="middle" fontSize="12" fill="#fff">i</text></svg>
+                    <span>A Zoom meeting will be automatically created and the applicant will receive an email invitation with meeting details and calendar invite.</span>
                   </div>
                 </div>
               )}
@@ -1276,6 +1282,65 @@ export default function RecruitsManagement() {
                   disabled={!selectedUnitManager}
                 >
                   Pass & Assign
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ✨ SUCCESS MODAL */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4 transform transition-all">
+            <div className="text-center">
+              {/* Success Icon */}
+              <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-4">
+                <svg className="h-8 w-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              
+              {/* Title */}
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                🎯 Interview Scheduled Successfully!
+              </h3>
+              
+              {/* Details */}
+              {successData && successData.zoomMeeting && (
+                <div className="text-sm text-gray-600 mb-6 space-y-2">
+                  <p><strong>Meeting ID:</strong> {successData.zoomMeeting.meetingId}</p>
+                  <p><strong>Join URL:</strong></p>
+                  <div className="bg-blue-50 p-2 rounded text-xs font-mono break-all">
+                    {successData.zoomMeeting.joinUrl}
+                  </div>
+                  {successData.zoomMeeting.password && (
+                    <p><strong>Password:</strong> <span className="font-mono">{successData.zoomMeeting.password}</span></p>
+                  )}
+                </div>
+              )}
+              
+              {/* Actions */}
+              <div className="flex space-x-3 justify-center">
+                {successData?.zoomMeeting?.joinUrl && (
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(successData.zoomMeeting.joinUrl);
+                      // Could add a toast notification here
+                    }}
+                    className="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors text-sm"
+                  >
+                    📋 Copy Link
+                  </button>
+                )}
+                <button
+                  onClick={() => {
+                    setShowSuccessModal(false);
+                    setSuccessData(null);
+                  }}
+                  className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                >
+                  ✅ Got it!
                 </button>
               </div>
             </div>

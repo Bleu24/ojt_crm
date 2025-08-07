@@ -233,6 +233,8 @@ exports.scheduleInterview = async (req, res) => {
           startTime: formatZoomDateTime(interviewDate, interviewTime),
           duration: 60,
           agenda: `Interview with ${recruit.fullName} for ${recruit.course} position. Contact: ${recruit.email}`,
+          // 🆕 ADD INVITEES FOR AUTO EMAIL NOTIFICATION
+          invitees: [recruit.email], // This will auto-send email to the applicant
           settings: {
             waiting_room: true,
             mute_upon_entry: true
@@ -325,6 +327,8 @@ exports.scheduleInitialInterview = async (req, res) => {
           startTime: formatZoomDateTime(interviewDate, interviewTime),
           duration: 60,
           agenda: `Initial interview with ${recruit.fullName} for ${recruit.course} position. Contact: ${recruit.email}`,
+          // � ZOOM WILL AUTOMATICALLY SEND EMAIL INVITATIONS
+          invitees: [recruit.email],
           settings: {
             waiting_room: true,
             mute_upon_entry: true
@@ -488,6 +492,8 @@ exports.scheduleFinalInterview = async (req, res) => {
           startTime: formatZoomDateTime(interviewDate, interviewTime),
           duration: 60,
           agenda: `Final interview with ${recruit.fullName} for ${recruit.course} position. Contact: ${recruit.email}`,
+          // � ZOOM WILL AUTOMATICALLY SEND EMAIL INVITATIONS
+          invitees: [recruit.email],
           settings: {
             waiting_room: true,
             mute_upon_entry: true

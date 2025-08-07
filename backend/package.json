@@ -33,6 +33,7 @@
     "luxon": "^3.6.1",
     "mongoose": "^8.16.0",
     "multer": "^2.0.1",
+    "nodemailer": "^7.0.5",
     "pdf-parse": "^1.1.1",
     "streamifier": "^0.1.1"
   },
