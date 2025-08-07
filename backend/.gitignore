@@ -4,3 +4,4 @@ node_modules/
 migrate-to-cloudinary.js
 cleanup-uploads.js
 upload-test.js
+test-zoom-time.js
