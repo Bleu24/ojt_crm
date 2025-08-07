@@ -31,6 +31,12 @@ interface Recruit {
   initialInterviewNotes?: string;
   initialInterviewCompleted?: boolean;
   
+  // Zoom Meeting Information for Initial Interview
+  initialInterviewZoomMeetingId?: string;
+  initialInterviewZoomJoinUrl?: string;
+  initialInterviewZoomStartUrl?: string;
+  initialInterviewZoomPassword?: string;
+  
   // Step 2 Interview (by unit manager)
   finalInterviewDate?: string;
   finalInterviewTime?: string;
@@ -39,11 +45,23 @@ interface Recruit {
   finalInterviewCompleted?: boolean;
   finalInterviewAssignedTo?: User; // Which unit manager is assigned to handle the final interview
   
+  // Zoom Meeting Information for Final Interview
+  finalInterviewZoomMeetingId?: string;
+  finalInterviewZoomJoinUrl?: string;
+  finalInterviewZoomStartUrl?: string;
+  finalInterviewZoomPassword?: string;
+  
   // Legacy fields (keeping for backward compatibility)
   interviewDate?: string;
   interviewTime?: string;
   interviewer?: User;
   interviewNotes?: string;
+  
+  // Legacy Zoom Meeting Information
+  zoomMeetingId?: string;
+  zoomJoinUrl?: string;
+  zoomStartUrl?: string;
+  zoomPassword?: string;
   
   assignedTo: User;
   dateApplied: string;
@@ -83,7 +101,8 @@ export default function RecruitsManagement() {
     interviewTime: '',
     interviewerId: '',
     interviewNotes: '',
-    interviewType: 'initial' as 'initial' | 'final'
+    interviewType: 'initial' as 'initial' | 'final',
+    createZoomMeeting: false
   });
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -329,6 +348,12 @@ export default function RecruitsManagement() {
         ? `${API_BASE_URL}/recruits/${selectedRecruit._id}/schedule-initial`
         : `${API_BASE_URL}/recruits/${selectedRecruit._id}/schedule-final`;
 
+      console.log('🔵 FRONTEND: Scheduling interview with data:', {
+        ...scheduleData,
+        recruitName: selectedRecruit.fullName,
+        endpoint
+      });
+
       const response = await fetch(endpoint, {
         method: 'PUT',
         headers: {
@@ -339,7 +364,8 @@ export default function RecruitsManagement() {
           interviewDate: scheduleData.interviewDate,
           interviewTime: scheduleData.interviewTime,
           interviewerId: scheduleData.interviewerId,
-          interviewNotes: scheduleData.interviewNotes
+          interviewNotes: scheduleData.interviewNotes,
+          createZoomMeeting: scheduleData.createZoomMeeting
         })
       });
 
@@ -348,6 +374,18 @@ export default function RecruitsManagement() {
       }
 
       const result = await response.json();
+      
+      console.log('✅ FRONTEND: Interview scheduled successfully:', result);
+      
+      // Show Zoom meeting details if created
+      if (result.zoomMeeting) {
+        alert(`✅ ${scheduleData.interviewType === 'initial' ? 'Initial' : 'Final'} interview scheduled with Zoom meeting!\n\n` +
+              `📅 Meeting ID: ${result.zoomMeeting.meetingId}\n` +
+              `🔗 Join URL: ${result.zoomMeeting.joinUrl}\n` +
+              `🔐 Password: ${result.zoomMeeting.password}\n\n` +
+              `The meeting details have been saved and will be visible in the interview information.`);
+      }
+      
       setRecruits(recruits.map(r => r._id === selectedRecruit._id ? result.recruit : r));
       setShowScheduleModal(false);
       setSelectedRecruit(null);
@@ -356,11 +394,12 @@ export default function RecruitsManagement() {
         interviewTime: '', 
         interviewerId: '', 
         interviewNotes: '',
-        interviewType: 'initial'
+        interviewType: 'initial',
+        createZoomMeeting: false
       });
       setError('');
     } catch (err) {
-      console.error('Error scheduling interview:', err);
+      console.error('❌ FRONTEND: Error scheduling interview:', err);
       setError(`Failed to schedule ${scheduleData.interviewType} interview. Please try again.`);
     }
   };
@@ -513,9 +552,17 @@ export default function RecruitsManagement() {
           return new Date(year, month - 1, day);
         })();
         
+      let subText = recruit.finalInterviewer?.name || '';
+      
+      // Add Zoom meeting info if available
+      if (recruit.finalInterviewZoomJoinUrl) {
+        subText += subText ? '\n' : '';
+        subText += `🎥 Zoom: ${recruit.finalInterviewZoomMeetingId}`;
+      }
+        
       return {
         text: `Final: ${date.toLocaleDateString()} ${recruit.finalInterviewTime}`,
-        subText: recruit.finalInterviewer?.name,
+        subText,
         canSchedule: currentUser.role === 'unit_manager' && recruit.finalInterviewAssignedTo?._id === currentUser.userId
       };
     }
@@ -540,9 +587,17 @@ export default function RecruitsManagement() {
           return new Date(year, month - 1, day);
         })();
         
+      let subText = recruit.initialInterviewer?.name || '';
+      
+      // Add Zoom meeting info if available
+      if (recruit.initialInterviewZoomJoinUrl) {
+        subText += subText ? '\n' : '';
+        subText += `🎥 Zoom: ${recruit.initialInterviewZoomMeetingId}`;
+      }
+        
       return {
         text: `Initial: ${date.toLocaleDateString()} ${recruit.initialInterviewTime}`,
-        subText: recruit.initialInterviewer?.name,
+        subText,
         canSchedule: ['intern', 'staff'].includes(currentUser.role)
       };
     }
@@ -740,7 +795,8 @@ export default function RecruitsManagement() {
                                       interviewNotes: isInitial 
                                         ? (recruit.initialInterviewNotes || '')
                                         : (recruit.finalInterviewNotes || ''),
-                                      interviewType: availableType
+                                      interviewType: availableType,
+                                      createZoomMeeting: false
                                     });
                                     setShowScheduleModal(true);
                                   }}
@@ -1101,6 +1157,28 @@ export default function RecruitsManagement() {
                   className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
                 />
               </div>
+
+              <div className="flex items-center space-x-3">
+                <input
+                  type="checkbox"
+                  id="createZoomMeeting"
+                  checked={scheduleData.createZoomMeeting}
+                  onChange={(e) => setScheduleData({ ...scheduleData, createZoomMeeting: e.target.checked })}
+                  className="w-4 h-4 text-purple-600 bg-white/10 border-gray-300 rounded focus:ring-purple-500 focus:ring-2"
+                />
+                <label htmlFor="createZoomMeeting" className="text-white text-sm font-medium flex items-center space-x-2">
+                  <span>🎥</span>
+                  <span>Create Zoom Meeting</span>
+                </label>
+              </div>
+              {scheduleData.createZoomMeeting && (
+                <div className="text-sm text-blue-300 bg-blue-500/10 border border-blue-500/20 rounded-lg p-3">
+                  <div className="flex items-center space-x-2">
+                    <span>ℹ️</span>
+                    <span>A Zoom meeting will be automatically created and the details will be included in the interview information.</span>
+                  </div>
+                </div>
+              )}
 
               <div className="flex justify-end space-x-4 pt-4">
                 <button
