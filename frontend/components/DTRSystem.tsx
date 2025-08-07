@@ -80,16 +80,54 @@ export default function DTRSystem() {
 
   // Calculate elapsed time if clocked in
   useEffect(() => {
-    if (todayEntry && !todayEntry.timeOut) {
+    if (todayEntry && !todayEntry.timeOut && todayEntry.timeIn) {
+      console.log('⏱️ Starting elapsed time calculation for entry:', todayEntry);
+      
       const timer = setInterval(() => {
-        const timeIn = new Date(todayEntry.timeIn);
-        const now = new Date();
-        const diff = now.getTime() - timeIn.getTime();
-        const hours = Math.floor(diff / (1000 * 60 * 60));
-        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-        setElapsedTime(`${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`);
+        try {
+          const timeIn = new Date(todayEntry.timeIn);
+          const now = new Date();
+          
+          // Validate timeIn date
+          if (isNaN(timeIn.getTime())) {
+            console.error('❌ Invalid timeIn date:', todayEntry.timeIn);
+            setElapsedTime('--:--:--');
+            return;
+          }
+          
+          const diff = now.getTime() - timeIn.getTime();
+          
+          // Debug logging
+          console.log('⏰ Time calculation:', {
+            timeIn: timeIn.toISOString(),
+            timeInLocal: timeIn.toLocaleString(),
+            now: now.toISOString(), 
+            nowLocal: now.toLocaleString(),
+            diffMs: diff,
+            diffHours: diff / (1000 * 60 * 60)
+          });
+          
+          // Handle negative difference (shouldn't happen but just in case)
+          if (diff < 0) {
+            console.warn('⚠️ Negative time difference, setting to 0');
+            setElapsedTime('00:00:00');
+            return;
+          }
+          
+          const totalSeconds = Math.floor(diff / 1000);
+          const hours = Math.floor(totalSeconds / 3600);
+          const minutes = Math.floor((totalSeconds % 3600) / 60);
+          const seconds = totalSeconds % 60;
+          
+          const formattedTime = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+          setElapsedTime(formattedTime);
+          
+        } catch (error) {
+          console.error('❌ Error calculating elapsed time:', error);
+          setElapsedTime('--:--:--');
+        }
       }, 1000);
+      
       return () => clearInterval(timer);
     } else {
       setElapsedTime('');
@@ -106,6 +144,7 @@ export default function DTRSystem() {
       const token = getToken();
       if (!token) return;
 
+      console.log('📡 Fetching DTR entries...');
       const response = await fetch(`${API_BASE_URL}/dtr/me`, {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -115,23 +154,38 @@ export default function DTRSystem() {
 
       if (response.ok) {
         const entries = await response.json();
+        console.log('📊 Fetched DTR entries:', entries);
         setRecentEntries(entries.slice(0, 5)); // Show only 5 recent entries
         
         // Check if there's an entry for today
-        const today = new Date().toISOString().split('T')[0];
+        const now = new Date();
+        const today = now.toISOString().split('T')[0]; // YYYY-MM-DD format
+        
+        console.log('🗓️ Looking for today\'s entry:', today);
+        
         const todayEntryFound = entries.find((entry: DTREntry) => {
-          const entryDate = new Date(entry.date).toISOString().split('T')[0];
+          // Handle both date-only and datetime strings
+          let entryDate: string;
+          if (entry.date.includes('T')) {
+            entryDate = new Date(entry.date).toISOString().split('T')[0];
+          } else {
+            entryDate = entry.date;
+          }
+          
+          console.log('🔍 Comparing:', { entryDate, today, matches: entryDate === today });
           return entryDate === today;
         });
+        
+        console.log('📋 Today\'s entry found:', todayEntryFound);
         setTodayEntry(todayEntryFound || null);
       }
     } catch (error) {
-      console.error('Error fetching DTR entries:', error);
+      console.error('❌ Error fetching DTR entries:', error);
     }
   };
 
   const handleTimeIn = async () => {
-    console.log('Time in button clicked');
+    console.log('⏰ Time in button clicked');
     setLoading(true);
     setError('');
 
@@ -143,7 +197,7 @@ export default function DTRSystem() {
         return;
       }
 
-      console.log('Making API call to:', `${API_BASE_URL}/dtr/timein`);
+      console.log('📡 Making API call to:', `${API_BASE_URL}/dtr/timein`);
       const response = await fetch(`${API_BASE_URL}/dtr/timein`, {
         method: 'POST',
         headers: {
@@ -152,18 +206,22 @@ export default function DTRSystem() {
         },
       });
 
-      console.log('Response status:', response.status);
+      console.log('📊 Response status:', response.status);
       const data = await response.json();
-      console.log('Response data:', data);
+      console.log('📊 Response data:', data);
 
       if (response.ok) {
+        // Update today's entry state immediately
         setTodayEntry(data.entry);
+        console.log('✅ Updated todayEntry state:', data.entry);
+        
+        // Refresh the full DTR entries list
         await fetchDTREntries();
       } else {
         setError(data.message || 'Failed to clock in');
       }
     } catch (error) {
-      console.error('Error during time in:', error);
+      console.error('❌ Error during time in:', error);
       setError('Network error occurred');
     } finally {
       setLoading(false);
@@ -253,6 +311,14 @@ export default function DTRSystem() {
   };
 
   const isTimedIn = todayEntry && !todayEntry.timeOut;
+  
+  // Debug logging for button state
+  console.log('🔘 Button state calculation:', {
+    todayEntry,
+    hasTimeOut: todayEntry?.timeOut,
+    isTimedIn,
+    buttonText: isTimedIn ? 'Clock Out' : 'Clock In'
+  });
 
   return (
     <div className="space-y-6">
