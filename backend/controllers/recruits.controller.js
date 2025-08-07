@@ -2,6 +2,7 @@ const Recruit = require('../models/Recruit.model');
 const User = require('../models/User.model');
 const axios = require('axios');
 const { resumeUpload, uploadToCloudinary, deleteFromCloudinary, extractPublicId } = require('../utils/cloudinary');
+const { createZoomMeeting, updateZoomMeeting, deleteZoomMeeting, formatZoomDateTime } = require('../utils/zoom');
 
 // Configure multer for file uploads using Cloudinary
 exports.upload = [
@@ -198,35 +199,84 @@ exports.updateRecruit = async (req, res) => {
 exports.scheduleInterview = async (req, res) => {
   try {
     const { recruitId } = req.params;
-    const { interviewDate, interviewTime, interviewerId, interviewNotes } = req.body;
+    const { interviewDate, interviewTime, interviewerId, interviewNotes, createZoomMeeting: shouldCreateZoom } = req.body;
 
     // Validate interviewer exists
+    let interviewer = null;
     if (interviewerId) {
-      const interviewer = await User.findById(interviewerId);
+      interviewer = await User.findById(interviewerId);
       if (!interviewer) {
         return res.status(404).json({ message: 'Interviewer not found' });
       }
     }
 
-    const updated = await Recruit.findByIdAndUpdate(
-      recruitId,
-      {
-        interviewDate: new Date(interviewDate),
-        interviewTime,
-        interviewer: interviewerId,
-        interviewNotes,
-        applicationStatus: 'Pending'
-      },
-      { new: true }
-    )
-    .populate('assignedTo', 'name role')
-    .populate('interviewer', 'name role');
+    // Get recruit details for Zoom meeting
+    const recruit = await Recruit.findById(recruitId);
+    if (!recruit) {
+      return res.status(404).json({ message: 'Recruit not found' });
+    }
+
+    const updateData = {
+      interviewDate: new Date(interviewDate),
+      interviewTime,
+      interviewer: interviewerId,
+      interviewNotes,
+      applicationStatus: 'Pending'
+    };
+
+    // Create Zoom meeting if requested
+    let zoomMeeting = null;
+    if (shouldCreateZoom) {
+      try {
+        const meetingData = {
+          topic: `Interview - ${recruit.fullName}`,
+          startTime: formatZoomDateTime(interviewDate, interviewTime),
+          duration: 60,
+          agenda: `Interview with ${recruit.fullName} for ${recruit.course} position. Contact: ${recruit.email}`,
+          settings: {
+            waiting_room: true,
+            mute_upon_entry: true
+          }
+        };
+
+        zoomMeeting = await createZoomMeeting(meetingData);
+        
+        // Add Zoom meeting info to update data
+        updateData.zoomMeetingId = zoomMeeting.id;
+        updateData.zoomJoinUrl = zoomMeeting.joinUrl;
+        updateData.zoomStartUrl = zoomMeeting.startUrl;
+        updateData.zoomPassword = zoomMeeting.password;
+      } catch (zoomError) {
+        console.error('Failed to create Zoom meeting:', zoomError.message);
+        // Continue without Zoom meeting - don't fail the whole operation
+      }
+    }
+
+    const updated = await Recruit.findByIdAndUpdate(recruitId, updateData, { new: true })
+      .populate('assignedTo', 'name role')
+      .populate('interviewer', 'name role');
 
     if (!updated) {
       return res.status(404).json({ message: 'Recruit not found' });
     }
 
-    res.status(200).json({ message: 'Interview scheduled successfully', recruit: updated });
+    const response = {
+      message: 'Interview scheduled successfully',
+      recruit: updated
+    };
+
+    // Include Zoom meeting details in response if created
+    if (zoomMeeting) {
+      response.zoomMeeting = {
+        joinUrl: zoomMeeting.joinUrl,
+        startUrl: zoomMeeting.startUrl,
+        meetingId: zoomMeeting.meetingId,
+        password: zoomMeeting.password
+      };
+      response.message += ' with Zoom meeting';
+    }
+
+    res.status(200).json(response);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -236,7 +286,7 @@ exports.scheduleInterview = async (req, res) => {
 exports.scheduleInitialInterview = async (req, res) => {
   try {
     const { recruitId } = req.params;
-    const { interviewDate, interviewTime, interviewerId, interviewNotes } = req.body;
+    const { interviewDate, interviewTime, interviewerId, interviewNotes, createZoomMeeting: shouldCreateZoom } = req.body;
 
     // Only allow intern and staff to schedule initial interviews
     if (!['intern', 'staff'].includes(req.user.role)) {
@@ -244,33 +294,105 @@ exports.scheduleInitialInterview = async (req, res) => {
     }
 
     // Validate interviewer exists
+    let interviewer = null;
     if (interviewerId) {
-      const interviewer = await User.findById(interviewerId);
+      interviewer = await User.findById(interviewerId);
       if (!interviewer) {
         return res.status(404).json({ message: 'Interviewer not found' });
       }
     }
 
-    const updated = await Recruit.findByIdAndUpdate(
-      recruitId,
-      {
-        initialInterviewDate: new Date(interviewDate),
-        initialInterviewTime: interviewTime,
-        initialInterviewer: interviewerId,
-        initialInterviewNotes: interviewNotes,
-        applicationStatus: 'Pending'
-      },
-      { new: true }
-    )
-    .populate('assignedTo', 'name role')
-    .populate('initialInterviewer', 'name role')
-    .populate('finalInterviewer', 'name role');
+    // Get recruit details for Zoom meeting
+    const recruit = await Recruit.findById(recruitId);
+    if (!recruit) {
+      return res.status(404).json({ message: 'Recruit not found' });
+    }
+
+    const updateData = {
+      initialInterviewDate: new Date(interviewDate),
+      initialInterviewTime: interviewTime,
+      initialInterviewer: interviewerId,
+      initialInterviewNotes: interviewNotes,
+      applicationStatus: 'Pending'
+    };
+
+    // Create Zoom meeting if requested
+    let zoomMeeting = null;
+    if (shouldCreateZoom) {
+      try {
+        const meetingData = {
+          topic: `Initial Interview - ${recruit.fullName}`,
+          startTime: formatZoomDateTime(interviewDate, interviewTime),
+          duration: 60,
+          agenda: `Initial interview with ${recruit.fullName} for ${recruit.course} position. Contact: ${recruit.email}`,
+          settings: {
+            waiting_room: true,
+            mute_upon_entry: true
+          }
+        };
+
+        console.log('🔵 ZOOM DEBUG - Initial Interview: Attempting to create Zoom meeting');
+        console.log('📋 Meeting Data:', JSON.stringify(meetingData, null, 2));
+        console.log('📅 Formatted Start Time:', meetingData.startTime);
+        console.log('👤 Recruit:', recruit.fullName, '| Email:', recruit.email);
+
+        zoomMeeting = await createZoomMeeting(meetingData);
+        
+        console.log('✅ ZOOM SUCCESS - Initial Interview: Meeting created successfully');
+        console.log('🆔 Meeting ID:', zoomMeeting.id);
+        console.log('🔗 Join URL:', zoomMeeting.joinUrl);
+        console.log('🔐 Password:', zoomMeeting.password);
+        
+        // Add Zoom meeting info to update data
+        updateData.initialInterviewZoomMeetingId = zoomMeeting.id;
+        updateData.initialInterviewZoomJoinUrl = zoomMeeting.joinUrl;
+        updateData.initialInterviewZoomStartUrl = zoomMeeting.startUrl;
+        updateData.initialInterviewZoomPassword = zoomMeeting.password;
+      } catch (zoomError) {
+        console.error('❌ ZOOM ERROR - Initial Interview: Failed to create Zoom meeting');
+        console.error('📝 Error Details:', zoomError.message);
+        console.error('📊 Full Error:', zoomError);
+        
+        // Log the specific request data that failed
+        console.error('🔍 Failed Request Data:', {
+          interviewDate,
+          interviewTime,
+          recruitName: recruit.fullName,
+          formattedDateTime: formatZoomDateTime(interviewDate, interviewTime)
+        });
+        
+        // Continue without Zoom meeting - don't fail the whole operation
+      }
+    } else {
+      console.log('⏭️ ZOOM SKIP - Initial Interview: Zoom meeting creation not requested (createZoomMeeting: false)');
+    }
+
+    const updated = await Recruit.findByIdAndUpdate(recruitId, updateData, { new: true })
+      .populate('assignedTo', 'name role')
+      .populate('initialInterviewer', 'name role')
+      .populate('finalInterviewer', 'name role');
 
     if (!updated) {
       return res.status(404).json({ message: 'Recruit not found' });
     }
 
-    res.status(200).json({ message: 'Initial interview scheduled successfully', recruit: updated });
+    const response = {
+      message: 'Initial interview scheduled successfully',
+      recruit: updated
+    };
+
+    // Include Zoom meeting details in response if created
+    if (zoomMeeting) {
+      response.zoomMeeting = {
+        joinUrl: zoomMeeting.joinUrl,
+        startUrl: zoomMeeting.startUrl,
+        meetingId: zoomMeeting.meetingId,
+        password: zoomMeeting.password
+      };
+      response.message += ' with Zoom meeting';
+    }
+
+    res.status(200).json(response);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -327,7 +449,7 @@ exports.completeInitialInterview = async (req, res) => {
 exports.scheduleFinalInterview = async (req, res) => {
   try {
     const { recruitId } = req.params;
-    const { interviewDate, interviewTime, interviewerId, interviewNotes } = req.body;
+    const { interviewDate, interviewTime, interviewerId, interviewNotes, createZoomMeeting: shouldCreateZoom } = req.body;
 
     // Only unit managers can schedule final interviews
     if (req.user.role !== 'unit_manager') {
@@ -341,33 +463,102 @@ exports.scheduleFinalInterview = async (req, res) => {
     }
 
     // Validate interviewer exists
+    let interviewer = null;
     if (interviewerId) {
-      const interviewer = await User.findById(interviewerId);
+      interviewer = await User.findById(interviewerId);
       if (!interviewer) {
         return res.status(404).json({ message: 'Interviewer not found' });
       }
     }
 
-    const updated = await Recruit.findByIdAndUpdate(
-      recruitId,
-      {
-        finalInterviewDate: new Date(interviewDate),
-        finalInterviewTime: interviewTime,
-        finalInterviewer: interviewerId,
-        finalInterviewNotes: interviewNotes,
-        applicationStatus: 'Pending Final Interview'
-      },
-      { new: true }
-    )
-    .populate('assignedTo', 'name role')
-    .populate('initialInterviewer', 'name role')
-    .populate('finalInterviewer', 'name role');
+    const updateData = {
+      finalInterviewDate: new Date(interviewDate),
+      finalInterviewTime: interviewTime,
+      finalInterviewer: interviewerId,
+      finalInterviewNotes: interviewNotes,
+      applicationStatus: 'Pending Final Interview'
+    };
+
+    // Create Zoom meeting if requested
+    let zoomMeeting = null;
+    if (shouldCreateZoom) {
+      try {
+        const meetingData = {
+          topic: `Final Interview - ${recruit.fullName}`,
+          startTime: formatZoomDateTime(interviewDate, interviewTime),
+          duration: 60,
+          agenda: `Final interview with ${recruit.fullName} for ${recruit.course} position. Contact: ${recruit.email}`,
+          settings: {
+            waiting_room: true,
+            mute_upon_entry: true
+          }
+        };
+
+        console.log('🔴 ZOOM DEBUG - Final Interview: Attempting to create Zoom meeting');
+        console.log('📋 Meeting Data:', JSON.stringify(meetingData, null, 2));
+        console.log('📅 Formatted Start Time:', meetingData.startTime);
+        console.log('👤 Recruit:', recruit.fullName, '| Email:', recruit.email);
+        console.log('👨‍💼 Unit Manager:', req.user.userId);
+
+        zoomMeeting = await createZoomMeeting(meetingData);
+        
+        console.log('✅ ZOOM SUCCESS - Final Interview: Meeting created successfully');
+        console.log('🆔 Meeting ID:', zoomMeeting.id);
+        console.log('🔗 Join URL:', zoomMeeting.joinUrl);
+        console.log('🔐 Password:', zoomMeeting.password);
+        
+        // Add Zoom meeting info to update data
+        updateData.finalInterviewZoomMeetingId = zoomMeeting.id;
+        updateData.finalInterviewZoomJoinUrl = zoomMeeting.joinUrl;
+        updateData.finalInterviewZoomStartUrl = zoomMeeting.startUrl;
+        updateData.finalInterviewZoomPassword = zoomMeeting.password;
+      } catch (zoomError) {
+        console.error('❌ ZOOM ERROR - Final Interview: Failed to create Zoom meeting');
+        console.error('📝 Error Details:', zoomError.message);
+        console.error('📊 Full Error:', zoomError);
+        
+        // Log the specific request data that failed
+        console.error('🔍 Failed Request Data:', {
+          interviewDate,
+          interviewTime,
+          recruitName: recruit.fullName,
+          formattedDateTime: formatZoomDateTime(interviewDate, interviewTime),
+          userRole: req.user.role,
+          userId: req.user.userId
+        });
+        
+        // Continue without Zoom meeting - don't fail the whole operation
+      }
+    } else {
+      console.log('⏭️ ZOOM SKIP - Final Interview: Zoom meeting creation not requested (createZoomMeeting: false)');
+    }
+
+    const updated = await Recruit.findByIdAndUpdate(recruitId, updateData, { new: true })
+      .populate('assignedTo', 'name role')
+      .populate('initialInterviewer', 'name role')
+      .populate('finalInterviewer', 'name role');
 
     if (!updated) {
       return res.status(404).json({ message: 'Recruit not found' });
     }
 
-    res.status(200).json({ message: 'Final interview scheduled successfully', recruit: updated });
+    const response = {
+      message: 'Final interview scheduled successfully',
+      recruit: updated
+    };
+
+    // Include Zoom meeting details in response if created
+    if (zoomMeeting) {
+      response.zoomMeeting = {
+        joinUrl: zoomMeeting.joinUrl,
+        startUrl: zoomMeeting.startUrl,
+        meetingId: zoomMeeting.meetingId,
+        password: zoomMeeting.password
+      };
+      response.message += ' with Zoom meeting';
+    }
+
+    res.status(200).json(response);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
