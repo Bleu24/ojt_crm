@@ -56,6 +56,24 @@ const RecruitSchema = new mongoose.Schema({
     ref: 'User'
   },
   
+  // Zoom Meeting Information for Initial Interview
+  initialInterviewZoomMeetingId: { type: String },
+  initialInterviewZoomJoinUrl: { type: String },
+  initialInterviewZoomStartUrl: { type: String },
+  initialInterviewZoomPassword: { type: String },
+  
+  // Zoom Meeting Information for Final Interview
+  finalInterviewZoomMeetingId: { type: String },
+  finalInterviewZoomJoinUrl: { type: String },
+  finalInterviewZoomStartUrl: { type: String },
+  finalInterviewZoomPassword: { type: String },
+  
+  // Legacy Zoom Meeting Information (for backward compatibility)
+  zoomMeetingId: { type: String },
+  zoomJoinUrl: { type: String },
+  zoomStartUrl: { type: String },
+  zoomPassword: { type: String },
+  
   // Assignment information
   assignedTo: {  // Who owns this recruit record
     type: mongoose.Schema.Types.ObjectId,
