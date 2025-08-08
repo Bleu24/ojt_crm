@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { API_BASE_URL } from '@/config/api';
+import ZoomAuthPrompt from '@/components/ZoomAuthPrompt';
 import { getToken, getUserFromToken } from '@/utils/auth';
 
 interface User {
@@ -73,10 +74,14 @@ export default function RecruitsManagement() {
   const [users, setUsers] = useState<User[]>([]);
   const [unitManagers, setUnitManagers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
+  const [emailLoading, setEmailLoading] = useState(false);
   const [error, setError] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [showAssignModal, setShowAssignModal] = useState(false);
+  const [showZoomPrompt, setShowZoomPrompt] = useState(false);
+  const [zoomConnecting, setZoomConnecting] = useState(false);
+  const [pendingSchedulePayload, setPendingSchedulePayload] = useState<any>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [successData, setSuccessData] = useState<{ type: string; zoomMeeting?: any } | null>(null);
   const [selectedRecruit, setSelectedRecruit] = useState<Recruit | null>(null);
@@ -334,6 +339,92 @@ export default function RecruitsManagement() {
   };
 
   // Handle schedule interview
+  const finalizeSchedule = async (payload: any) => {
+    const { endpoint, body } = payload;
+    const token = getToken();
+    const response = await fetch(endpoint, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(body)
+    });
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(text || 'Request failed');
+    }
+    return response.json();
+  };
+
+  const initiateZoomConnect = async () => {
+    try {
+      setZoomConnecting(true);
+      const token = getToken();
+      const res = await fetch(`${API_BASE_URL}/zoom/connect`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      const data = await res.json();
+      if (res.ok && data.authUrl) {
+        const w = 600, h = 740;
+        const y = window.top!.outerHeight / 2 + window.top!.screenY - (h / 2);
+        const x = window.top!.outerWidth / 2 + window.top!.screenX - (w / 2);
+        const popup = window.open(data.authUrl, 'zoom-oauth', `width=${w},height=${h},left=${x},top=${y}`);
+
+        const tokenHeader = { 'Authorization': `Bearer ${token}` };
+        const poll = setInterval(async () => {
+          try {
+            const statusRes = await fetch(`${API_BASE_URL}/zoom/status`, { headers: tokenHeader });
+            if (statusRes.ok) {
+              const status = await statusRes.json();
+              if (status?.details?.authenticated) {
+                clearInterval(poll);
+                popup?.close();
+                setShowZoomPrompt(false);
+                setZoomConnecting(false);
+                if (pendingSchedulePayload) {
+                  try {
+                    const result = await finalizeSchedule(pendingSchedulePayload);
+                    // Apply success handling similar to handleScheduleInterview
+                    if (result.zoomMeeting && selectedRecruit) {
+                      setSuccessData({ type: scheduleData.interviewType, zoomMeeting: result.zoomMeeting });
+                      setShowSuccessModal(true);
+                      setRecruits(recruits.map(r => r._id === selectedRecruit._id ? result.recruit : r));
+                    }
+                    setShowScheduleModal(false);
+                    setSelectedRecruit(null);
+                    setScheduleData({ 
+                      interviewDate: '', 
+                      interviewTime: '', 
+                      interviewerId: '', 
+                      interviewNotes: '',
+                      interviewType: 'initial',
+                      createZoomMeeting: false
+                    });
+                  } catch (e) {
+                    console.error('Resume schedule error', e);
+                    setError('Failed to resume scheduling after Zoom connect.');
+                  } finally {
+                    setPendingSchedulePayload(null);
+                  }
+                }
+              }
+            }
+          } catch {}
+        }, 1000);
+      } else {
+        setZoomConnecting(false);
+        setError('Failed to get Zoom authorization URL.');
+      }
+    } catch (e) {
+      setZoomConnecting(false);
+      setError('Error initiating Zoom connection.');
+    }
+  };
   const handleScheduleInterview = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -356,26 +447,29 @@ export default function RecruitsManagement() {
         endpoint
       });
 
-      const response = await fetch(endpoint, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
+      const payload = {
+        endpoint,
+        body: {
           interviewDate: scheduleData.interviewDate,
           interviewTime: scheduleData.interviewTime,
           interviewerId: scheduleData.interviewerId,
           interviewNotes: scheduleData.interviewNotes,
           createZoomMeeting: scheduleData.createZoomMeeting
-        })
-      });
+        }
+      };
 
-      if (!response.ok) {
-        throw new Error(`Failed to schedule ${scheduleData.interviewType} interview`);
+      let result;
+      try {
+        result = await finalizeSchedule(payload);
+      } catch (err: any) {
+        const msg = String(err?.message || '');
+        if (msg.includes('authRequired') || msg.includes('Zoom authentication required') || msg.includes('401')) {
+          setPendingSchedulePayload(payload);
+          setShowZoomPrompt(true);
+          return;
+        }
+        throw err;
       }
-
-      const result = await response.json();
       
       console.log('✅ FRONTEND: Interview scheduled successfully:', result);
       
@@ -490,6 +584,250 @@ export default function RecruitsManagement() {
       dateApplied: new Date().toISOString().split('T')[0]
     });
     setSelectedFile(null);
+  };
+
+  // Send email functions
+  const sendPassInitialEmail = async (recruitId: string, message?: string) => {
+    try {
+      const token = getToken();
+      if (!token) {
+        setError('No authentication token found');
+        return false;
+      }
+
+      const response = await fetch(`${API_BASE_URL}/email/pass-initial`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          recruitId,
+          message: message || 'Congratulations on passing your initial interview!'
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to send pass initial email');
+      }
+
+      const result = await response.json();
+      console.log('✅ Pass initial email sent:', result);
+      return true;
+    } catch (err) {
+      console.error('❌ Error sending pass initial email:', err);
+      setError('Failed to send email notification. Please try again.');
+      return false;
+    }
+  };
+
+  const sendFailInitialEmail = async (recruitId: string, message?: string) => {
+    try {
+      const token = getToken();
+      if (!token) {
+        setError('No authentication token found');
+        return false;
+      }
+
+      const response = await fetch(`${API_BASE_URL}/email/fail-initial`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          recruitId,
+          message: message || 'Thank you for your time and interest in our company.'
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to send fail initial email');
+      }
+
+      const result = await response.json();
+      console.log('✅ Fail initial email sent:', result);
+      return true;
+    } catch (err) {
+      console.error('❌ Error sending fail initial email:', err);
+      setError('Failed to send email notification. Please try again.');
+      return false;
+    }
+  };
+
+  const sendHireEmail = async (recruitId: string, jobDetails?: any) => {
+    try {
+      const token = getToken();
+      if (!token) {
+        setError('No authentication token found');
+        return false;
+      }
+
+      const response = await fetch(`${API_BASE_URL}/email/hire`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          recruitId,
+          jobDetails: jobDetails || {
+            startDate: 'To be determined',
+            salary: 'Competitive package',
+            benefits: 'Health, Dental, and other benefits',
+            workLocation: 'Office/Remote',
+            workArrangement: 'Full-time'
+          }
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to send hire email');
+      }
+
+      const result = await response.json();
+      console.log('✅ Hire email sent:', result);
+      return true;
+    } catch (err) {
+      console.error('❌ Error sending hire email:', err);
+      setError('Failed to send email notification. Please try again.');
+      return false;
+    }
+  };
+
+  const sendRejectEmail = async (recruitId: string, message?: string) => {
+    try {
+      const token = getToken();
+      if (!token) {
+        setError('No authentication token found');
+        return false;
+      }
+
+      const response = await fetch(`${API_BASE_URL}/email/reject`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          recruitId,
+          message: message || 'We appreciate your interest and wish you success in your career journey.'
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to send reject email');
+      }
+
+      const result = await response.json();
+      console.log('✅ Reject email sent:', result);
+      return true;
+    } catch (err) {
+      console.error('❌ Error sending reject email:', err);
+      setError('Failed to send email notification. Please try again.');
+      return false;
+    }
+  };
+
+  // Combined handlers that complete interview and send email
+  const handlePassInitialInterview = async (recruitId: string, assignedTo?: string) => {
+    setEmailLoading(true);
+    try {
+      // First complete the interview
+      await handleCompleteInterview(recruitId, 'initial', true, 'Passed initial interview', assignedTo);
+      
+      // Then send the email
+      const emailSent = await sendPassInitialEmail(recruitId);
+      
+      if (emailSent) {
+        alert('✅ Initial interview marked as passed and email notification sent!');
+      } else {
+        alert('⚠️ Interview completed but email notification failed. Please send manually.');
+      }
+    } catch (err) {
+      console.error('Error in pass initial process:', err);
+      setError('Failed to complete the pass initial process. Please try again.');
+    } finally {
+      setEmailLoading(false);
+    }
+  };
+
+  const handleFailInitialInterview = async (recruitId: string) => {
+    if (!confirm('Are you sure you want to mark this candidate as failed and send a rejection email?')) {
+      return;
+    }
+    
+    setEmailLoading(true);
+    try {
+      // First complete the interview
+      await handleCompleteInterview(recruitId, 'initial', false, 'Did not pass initial interview');
+      
+      // Then send the email
+      const emailSent = await sendFailInitialEmail(recruitId);
+      
+      if (emailSent) {
+        alert('✅ Initial interview marked as failed and email notification sent!');
+      } else {
+        alert('⚠️ Interview completed but email notification failed. Please send manually.');
+      }
+    } catch (err) {
+      console.error('Error in fail initial process:', err);
+      setError('Failed to complete the fail initial process. Please try again.');
+    } finally {
+      setEmailLoading(false);
+    }
+  };
+
+  const handleHireCandidate = async (recruitId: string) => {
+    if (!confirm('Are you sure you want to hire this candidate and send a job offer email?')) {
+      return;
+    }
+    
+    setEmailLoading(true);
+    try {
+      // First complete the interview
+      await handleCompleteInterview(recruitId, 'final', true, 'Candidate hired');
+      
+      // Then send the email
+      const emailSent = await sendHireEmail(recruitId);
+      
+      if (emailSent) {
+        alert('🎉 Candidate hired and job offer email sent!');
+      } else {
+        alert('⚠️ Candidate hired but email notification failed. Please send manually.');
+      }
+    } catch (err) {
+      console.error('Error in hire process:', err);
+      setError('Failed to complete the hire process. Please try again.');
+    } finally {
+      setEmailLoading(false);
+    }
+  };
+
+  const handleRejectCandidate = async (recruitId: string) => {
+    if (!confirm('Are you sure you want to reject this candidate and send a rejection email?')) {
+      return;
+    }
+    
+    setEmailLoading(true);
+    try {
+      // First complete the interview
+      await handleCompleteInterview(recruitId, 'final', false, 'Candidate rejected');
+      
+      // Then send the email
+      const emailSent = await sendRejectEmail(recruitId);
+      
+      if (emailSent) {
+        alert('✅ Candidate rejected and email notification sent!');
+      } else {
+        alert('⚠️ Candidate rejected but email notification failed. Please send manually.');
+      }
+    } catch (err) {
+      console.error('Error in reject process:', err);
+      setError('Failed to complete the reject process. Please try again.');
+    } finally {
+      setEmailLoading(false);
+    }
   };
 
   // Get status color
@@ -630,6 +968,12 @@ export default function RecruitsManagement() {
 
   return (
     <div className="space-y-6">
+      <ZoomAuthPrompt
+        open={showZoomPrompt}
+        onClose={() => setShowZoomPrompt(false)}
+        onConnect={initiateZoomConnect}
+        connecting={zoomConnecting}
+      />
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
@@ -832,11 +1176,12 @@ export default function RecruitsManagement() {
                                   ✓ Pass Initial
                                 </button>
                                 <button
-                                  onClick={() => handleCompleteInterview(recruit._id, 'initial', false)}
-                                  className="px-2 py-1 bg-red-500/20 text-red-400 rounded text-xs hover:bg-red-500/30 transition-colors"
+                                  onClick={() => handleFailInitialInterview(recruit._id)}
+                                  disabled={loading || emailLoading}
+                                  className="px-2 py-1 bg-red-500/20 text-red-400 rounded text-xs hover:bg-red-500/30 transition-colors disabled:opacity-50"
                                   title="Fail Initial Interview"
                                 >
-                                  ✗ Fail Initial
+                                  {emailLoading ? 'Sending...' : '✗ Fail Initial'}
                                 </button>
                               </div>
                             )}
@@ -845,18 +1190,20 @@ export default function RecruitsManagement() {
                               currentUser?.role === 'unit_manager') && (
                               <div className="flex space-x-1">
                                 <button
-                                  onClick={() => handleCompleteInterview(recruit._id, 'final', true)}
-                                  className="px-2 py-1 bg-green-500/20 text-green-400 rounded text-xs hover:bg-green-500/30 transition-colors"
+                                  onClick={() => handleHireCandidate(recruit._id)}
+                                  disabled={loading || emailLoading}
+                                  className="px-2 py-1 bg-green-500/20 text-green-400 rounded text-xs hover:bg-green-500/30 transition-colors disabled:opacity-50"
                                   title="Hire Candidate"
                                 >
-                                  ✓ Hire
+                                  {emailLoading ? 'Sending...' : '✓ Hire'}
                                 </button>
                                 <button
-                                  onClick={() => handleCompleteInterview(recruit._id, 'final', false)}
-                                  className="px-2 py-1 bg-red-500/20 text-red-400 rounded text-xs hover:bg-red-500/30 transition-colors"
+                                  onClick={() => handleRejectCandidate(recruit._id)}
+                                  disabled={loading || emailLoading}
+                                  className="px-2 py-1 bg-red-500/20 text-red-400 rounded text-xs hover:bg-red-500/30 transition-colors disabled:opacity-50"
                                   title="Reject Candidate"
                                 >
-                                  ✗ Reject
+                                  {emailLoading ? 'Sending...' : '✗ Reject'}
                                 </button>
                               </div>
                             )}
@@ -1273,15 +1620,15 @@ export default function RecruitsManagement() {
                       setError('Please select a unit manager to assign the final interview to.');
                       return;
                     }
-                    handleCompleteInterview(selectedRecruit._id, 'initial', true, '', selectedUnitManager);
+                    handlePassInitialInterview(selectedRecruit._id, selectedUnitManager);
                     setShowAssignModal(false);
                     setSelectedRecruit(null);
                     setSelectedUnitManager('');
                   }}
-                  className="px-6 py-2 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-lg hover:from-green-600 hover:to-emerald-600 transition-all"
-                  disabled={!selectedUnitManager}
+                  className="px-6 py-2 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-lg hover:from-green-600 hover:to-emerald-600 transition-all disabled:opacity-50"
+                  disabled={!selectedUnitManager || loading || emailLoading}
                 >
-                  Pass & Assign
+                  {emailLoading ? 'Sending...' : 'Pass & Assign'}
                 </button>
               </div>
             </div>
