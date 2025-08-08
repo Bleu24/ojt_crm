@@ -396,7 +396,8 @@ exports.scheduleInitialInterview = async (req, res) => {
             password: zoomMeeting.password,
             startTime: zoomMeeting.startTime,
             duration: zoomMeeting.duration,
-            meetingId: zoomMeeting.meetingId || zoomMeeting.id.toString()
+            meetingId: zoomMeeting.meetingId || zoomMeeting.id.toString(),
+            timezone: process.env.ZOOM_DEFAULT_TIMEZONE || 'Asia/Manila'
           };
           
           const senderInfo = {
@@ -612,7 +613,8 @@ exports.scheduleFinalInterview = async (req, res) => {
             password: zoomMeeting.password,
             startTime: zoomMeeting.startTime,
             duration: zoomMeeting.duration,
-            meetingId: zoomMeeting.meetingId || zoomMeeting.id.toString()
+            meetingId: zoomMeeting.meetingId || zoomMeeting.id.toString(),
+            timezone: process.env.ZOOM_DEFAULT_TIMEZONE || 'Asia/Manila'
           };
           
           const senderInfo = {
