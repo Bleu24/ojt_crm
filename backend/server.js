@@ -49,6 +49,7 @@ const recruitRoutes = require('./routes/recruits.routes');
 const reportsRoutes = require('./routes/reports.routes');
 const napReportRoutes = require('./routes/napReport.routes');
 const notificationRoutes = require('./routes/notifications.routes');
+const emailRoutes = require('./routes/email.routes');
 
 // Middlewares (Routes)
 app.use(express.json());
@@ -78,6 +79,7 @@ app.use('/api/recruits', recruitRoutes);
 app.use('/api/reports', reportsRoutes);
 app.use('/api/nap-report', napReportRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/email', emailRoutes);
 
 // Routes (sample placeholder)
 app.get('/', (req, res) => {
