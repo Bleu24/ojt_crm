@@ -2,7 +2,7 @@ const Recruit = require('../models/Recruit.model');
 const User = require('../models/User.model');
 const axios = require('axios');
 const { resumeUpload, uploadToCloudinary, deleteFromCloudinary, extractPublicId } = require('../utils/cloudinary');
-const { createZoomMeeting, updateZoomMeeting, deleteZoomMeeting, formatZoomDateTime } = require('../utils/zoom');
+const { createZoomMeeting, createZoomMeetingFallback, updateZoomMeeting, deleteZoomMeeting, formatZoomDateTime } = require('../utils/zoom');
 
 // Configure multer for file uploads using Cloudinary
 exports.upload = [
@@ -253,7 +253,7 @@ exports.scheduleInterview = async (req, res) => {
           }
         };
 
-        zoomMeeting = await createZoomMeeting(meetingData);
+        zoomMeeting = await createZoomMeeting(meetingData, interviewerId);
         
         // Add Zoom meeting info to update data
         updateData.zoomMeetingId = zoomMeeting.id;
@@ -364,7 +364,7 @@ exports.scheduleInitialInterview = async (req, res) => {
         console.log('📅 Formatted Start Time:', meetingData.startTime);
         console.log('👤 Recruit:', recruit.fullName, '| Email:', recruit.email);
 
-        zoomMeeting = await createZoomMeeting(meetingData);
+        zoomMeeting = await createZoomMeeting(meetingData, interviewerId);
         
         console.log('✅ ZOOM SUCCESS - Initial Interview: Meeting created successfully');
         console.log('🆔 Meeting ID:', zoomMeeting.id);
@@ -542,7 +542,7 @@ exports.scheduleFinalInterview = async (req, res) => {
         console.log('👤 Recruit:', recruit.fullName, '| Email:', recruit.email);
         console.log('👨‍💼 Unit Manager:', req.user.userId);
 
-        zoomMeeting = await createZoomMeeting(meetingData);
+        zoomMeeting = await createZoomMeeting(meetingData, interviewerId);
         
         console.log('✅ ZOOM SUCCESS - Final Interview: Meeting created successfully');
         console.log('🆔 Meeting ID:', zoomMeeting.id);
