@@ -129,11 +129,13 @@ const createMeeting = async (req, res) => {
       });
     }
     
+    const meetingTimezone = process.env.ZOOM_DEFAULT_TIMEZONE || 'Asia/Manila';
     const meetingData = {
       topic,
-      start_time,
+      start_time, // expecting a local time string already; downstream will reformat if needed
       duration: parseInt(duration),
-      agenda
+      agenda,
+      timezone: meetingTimezone
     };
     
     const meeting = await createZoomMeeting(meetingData, userId);
