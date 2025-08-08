@@ -228,6 +228,9 @@ exports.scheduleInterview = async (req, res) => {
     let zoomMeeting = null;
     if (shouldCreateZoom) {
       try {
+        // Get current user information for email sender
+        const currentUser = await User.findById(req.user.userId).select('name email');
+        
         const meetingData = {
           topic: `Interview - ${recruit.fullName}`,
           startTime: formatZoomDateTime(interviewDate, interviewTime),
@@ -235,6 +238,15 @@ exports.scheduleInterview = async (req, res) => {
           agenda: `Interview with ${recruit.fullName} for ${recruit.course} position. Contact: ${recruit.email}`,
           // 🆕 ADD INVITEES FOR AUTO EMAIL NOTIFICATION
           invitees: [recruit.email], // This will auto-send email to the applicant
+          // 🆕 ADD SENDER INFO FOR PERSONALIZED EMAILS
+          senderInfo: {
+            name: currentUser?.name || 'Recruitment Team',
+            email: currentUser?.email,
+            companyName: 'Our Company' // You can make this configurable too
+          },
+          // 🆕 ADD CANDIDATE NAME FOR PERSONALIZED GREETING
+          candidateName: recruit.fullName,
+          interviewPhase: 'Interview',
           settings: {
             waiting_room: true,
             mute_upon_entry: true
@@ -322,13 +334,25 @@ exports.scheduleInitialInterview = async (req, res) => {
     let zoomMeeting = null;
     if (shouldCreateZoom) {
       try {
+        // Get current user information for email sender
+        const currentUser = await User.findById(req.user.userId).select('name email');
+        
         const meetingData = {
           topic: `Initial Interview - ${recruit.fullName}`,
           startTime: formatZoomDateTime(interviewDate, interviewTime),
           duration: 60,
           agenda: `Initial interview with ${recruit.fullName} for ${recruit.course} position. Contact: ${recruit.email}`,
-          // � ZOOM WILL AUTOMATICALLY SEND EMAIL INVITATIONS
+          // 🆕 ZOOM WILL AUTOMATICALLY SEND EMAIL INVITATIONS
           invitees: [recruit.email],
+          // 🆕 ADD SENDER INFO FOR PERSONALIZED EMAILS
+          senderInfo: {
+            name: currentUser?.name || 'Recruitment Team',
+            email: currentUser?.email,
+            companyName: 'Our Company' // You can make this configurable too
+          },
+          // 🆕 ADD CANDIDATE NAME FOR PERSONALIZED GREETING
+          candidateName: recruit.fullName,
+          interviewPhase: 'Initial Interview',
           settings: {
             waiting_room: true,
             mute_upon_entry: true
@@ -487,13 +511,25 @@ exports.scheduleFinalInterview = async (req, res) => {
     let zoomMeeting = null;
     if (shouldCreateZoom) {
       try {
+        // Get current user information for email sender
+        const currentUser = await User.findById(req.user.userId).select('name email');
+        
         const meetingData = {
           topic: `Final Interview - ${recruit.fullName}`,
           startTime: formatZoomDateTime(interviewDate, interviewTime),
           duration: 60,
           agenda: `Final interview with ${recruit.fullName} for ${recruit.course} position. Contact: ${recruit.email}`,
-          // � ZOOM WILL AUTOMATICALLY SEND EMAIL INVITATIONS
+          // 🆕 ZOOM WILL AUTOMATICALLY SEND EMAIL INVITATIONS
           invitees: [recruit.email],
+          // 🆕 ADD SENDER INFO FOR PERSONALIZED EMAILS
+          senderInfo: {
+            name: currentUser?.name || 'Recruitment Team',
+            email: currentUser?.email,
+            companyName: 'Our Company' // You can make this configurable too
+          },
+          // 🆕 ADD CANDIDATE NAME FOR PERSONALIZED GREETING
+          candidateName: recruit.fullName,
+          interviewPhase: 'Final Interview',
           settings: {
             waiting_room: true,
             mute_upon_entry: true
