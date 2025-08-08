@@ -1,4 +1,5 @@
 const axios = require('axios');
+const { sendInterviewInvitation } = require('./email');
 
 // Zoom API configuration
 const ZOOM_API_BASE_URL = 'https://api.zoom.us/v2';
@@ -69,9 +70,8 @@ const createZoomMeeting = async (meetingData) => {
         approval_type: 2,
         audio: 'both',
         auto_recording: 'none',
-        // 🎯 ZOOM'S BUILT-IN EMAIL NOTIFICATIONS
+        // Email notifications for the host
         email_notification: true,
-        registrants_email_notification: true,
         ...meetingData.settings
       }
     };
@@ -93,13 +93,7 @@ const createZoomMeeting = async (meetingData) => {
     console.log('🆔 Meeting ID:', response.data.id);
     console.log('🔗 Join URL:', response.data.join_url);
 
-    // 🎯 ZOOM HANDLES EMAILS AUTOMATICALLY - NO CUSTOM CODE NEEDED!
-    if (meetingData.invitees && meetingData.invitees.length > 0) {
-      console.log('📧 ZOOM EMAILS: Invitations will be sent automatically to:', meetingData.invitees);
-      console.log('💡 Zoom handles email invitations - simpler and more reliable!');
-    }
-
-    return {
+    const meetingInfo = {
       id: response.data.id,
       topic: response.data.topic,
       joinUrl: response.data.join_url,
@@ -109,6 +103,37 @@ const createZoomMeeting = async (meetingData) => {
       duration: response.data.duration,
       meetingId: response.data.id.toString()
     };
+
+    // 🎯 SEND CUSTOM EMAIL INVITATIONS TO INVITEES
+    if (meetingData.invitees && meetingData.invitees.length > 0) {
+      console.log('📧 EMAIL SERVICE: Sending custom interview invitations...');
+      
+      for (const email of meetingData.invitees) {
+        try {
+          // Extract first name from candidateName if provided
+          let firstName = null;
+          if (meetingData.candidateName) {
+            firstName = meetingData.candidateName.split(' ')[0];
+            console.log('👤 Candidate Name:', meetingData.candidateName, '→ First Name:', firstName);
+          }
+          
+          // Pass sender information and candidate name if provided
+          await sendInterviewInvitation(
+            email, 
+            meetingInfo, 
+            meetingData.senderInfo, 
+            meetingData.interviewPhase || 'Interview',
+            firstName
+          );
+          console.log('✅ Interview invitation sent to:', email);
+        } catch (emailError) {
+          console.error('❌ Failed to send invitation to:', email, emailError.message);
+          // Don't throw here - meeting was created successfully, email is secondary
+        }
+      }
+    }
+
+    return meetingInfo;
 
   } catch (error) {
     console.error('❌ ZOOM API ERROR: Meeting creation failed');
