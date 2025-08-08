@@ -232,9 +232,10 @@ exports.scheduleInterview = async (req, res) => {
         // Get current user information for email sender
         const currentUser = await User.findById(req.user.userId).select('name email');
         
+        const meetingTimezone = process.env.ZOOM_DEFAULT_TIMEZONE || 'Asia/Manila';
         const meetingData = {
           topic: `Interview - ${recruit.fullName}`,
-          startTime: formatZoomDateTime(interviewDate, interviewTime),
+          startTime: formatZoomDateTime(interviewDate, interviewTime, meetingTimezone),
           duration: 60,
           agenda: `Interview with ${recruit.fullName} for ${recruit.course} position. Contact: ${recruit.email}`,
           // 🆕 ADD INVITEES FOR AUTO EMAIL NOTIFICATION
@@ -340,9 +341,10 @@ exports.scheduleInitialInterview = async (req, res) => {
         // Get current user information for email sender
         const currentUser = await User.findById(req.user.userId).select('name email');
         
+        const meetingTimezone = process.env.ZOOM_DEFAULT_TIMEZONE || 'Asia/Manila';
         const meetingData = {
           topic: `Initial Interview - ${recruit.fullName}`,
-          startTime: formatZoomDateTime(interviewDate, interviewTime),
+          startTime: formatZoomDateTime(interviewDate, interviewTime, meetingTimezone),
           duration: 60,
           agenda: `Initial interview with ${recruit.fullName} for ${recruit.course} position. Contact: ${recruit.email}`,
           // 🆕 ZOOM WILL AUTOMATICALLY SEND EMAIL INVITATIONS
@@ -364,7 +366,7 @@ exports.scheduleInitialInterview = async (req, res) => {
 
         console.log('🔵 ZOOM DEBUG - Initial Interview: Attempting to create Zoom meeting');
         console.log('📋 Meeting Data:', JSON.stringify(meetingData, null, 2));
-        console.log('📅 Formatted Start Time:', meetingData.startTime);
+          console.log('📅 Formatted Start Time:', meetingData.startTime, '| TZ:', meetingTimezone);
         console.log('👤 Recruit:', recruit.fullName, '| Email:', recruit.email);
 
         // Use the authenticated user's ID (who connected to Zoom), not the interviewerId
