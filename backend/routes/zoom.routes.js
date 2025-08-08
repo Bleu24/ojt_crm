@@ -7,7 +7,6 @@ const zoomController = require('../controllers/zoom.controller');
 router.get('/auth/initiate', authenticateToken, zoomController.initiateOAuth);
 router.post('/connect', authenticateToken, zoomController.initiateOAuth); // Alias for frontend compatibility
 router.get('/callback', zoomController.handleOAuthCallback); // Original callback route
-router.get('/auth/callback', zoomController.handleOAuthCallback); // Alternative callback route
 router.post('/disconnect', authenticateToken, zoomController.disconnectZoom); // Add disconnect route
 
 // Check Zoom API connection status
