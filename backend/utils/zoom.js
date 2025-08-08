@@ -1,4 +1,5 @@
 const axios = require('axios');
+const { DateTime } = require('luxon');
 
 // Zoom API Base URL
 const ZOOM_API_BASE_URL = 'https://api.zoom.us/v2';
@@ -156,30 +157,42 @@ const checkZoomConnection = async (userId) => {
   }
 };
 
-// Format date and time for Zoom API (ISO 8601 format)
-const formatZoomDateTime = (date, time) => {
+// Format date and time for Zoom API using a specific timezone
+// Returns local time string 'yyyy-LL-ddTHH:mm:ss' and relies on the 'timezone' field in the Zoom payload
+const formatZoomDateTime = (date, time, timezone = process.env.ZOOM_DEFAULT_TIMEZONE || 'Asia/Manila') => {
   try {
-    // Handle different input formats
-    let targetDate;
-    
+    let dt;
+    // If both date and time are provided (e.g., '2025-08-10', '15:00') treat them as in the provided timezone
     if (typeof date === 'string' && typeof time === 'string') {
-      // Combine date and time strings
-      targetDate = new Date(`${date}T${time}`);
+      dt = DateTime.fromISO(`${date}T${time}`, { zone: timezone });
     } else if (date instanceof Date) {
-      targetDate = new Date(date);
+      dt = DateTime.fromJSDate(date, { zone: timezone });
     } else if (typeof date === 'string') {
-      targetDate = new Date(date);
+      // If a single ISO-like string is provided:
+      // - If it has an explicit offset/zone, convert to desired timezone preserving instant
+      // - If it's naive (no zone), interpret it as wall time in the desired timezone (no shift)
+      const hasZone = /[zZ]|[+-]\d{2}:?\d{2}$/.test(date);
+      if (hasZone) {
+        const parsed = DateTime.fromISO(date, { setZone: true });
+        dt = parsed.isValid ? parsed.setZone(timezone) : DateTime.invalid('Invalid ISO');
+      } else {
+        // Parse as local time in target timezone
+        dt = DateTime.fromFormat(date, "yyyy-LL-dd'T'HH:mm:ss", { zone: timezone });
+        if (!dt.isValid) {
+          // Try a looser parse fallback
+          dt = DateTime.fromISO(date, { zone: timezone });
+        }
+      }
     } else {
       throw new Error('Invalid date format');
     }
-    
-    // Validate the date
-    if (isNaN(targetDate.getTime())) {
+
+    if (!dt.isValid) {
       throw new Error('Invalid date/time provided');
     }
-    
-    // Return ISO string (Zoom expects UTC time)
-    return targetDate.toISOString();
+
+    // Zoom expects a local-time string when the 'timezone' field is provided
+    return dt.toFormat("yyyy-LL-dd'T'HH:mm:ss");
   } catch (error) {
     throw new Error(`Date formatting error: ${error.message}`);
   }
@@ -202,12 +215,14 @@ const createZoomMeeting = async (meetingData, userId) => {
     console.log('📋 Meeting topic:', topic);
     
     // Format the meeting data for Zoom API
+    const meetingTimezone = process.env.ZOOM_DEFAULT_TIMEZONE || 'Asia/Manila';
     const zoomMeetingPayload = {
       topic: topic,
       type: 2, // Scheduled meeting
-      start_time: formatZoomDateTime(actualStartTime),
+      // Provide local time string and explicit timezone so Zoom displays correctly for the host and attendees
+      start_time: formatZoomDateTime(actualStartTime, undefined, meetingTimezone),
       duration: parseInt(duration),
-      timezone: 'UTC',
+      timezone: meetingTimezone,
       agenda: agenda || `Interview session for ${topic}`,
       settings: {
         host_video: true,
