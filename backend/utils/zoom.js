@@ -449,6 +449,7 @@ const scheduleInterviewMeeting = async (recruitData, interviewType = 'initial', 
       password: meeting.password,
       startTime: meeting.startTime,
       duration: meeting.duration,
+      timezone: process.env.ZOOM_DEFAULT_TIMEZONE || 'Asia/Manila',
       meetingId: meeting.meetingId
     };
     
