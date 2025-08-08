@@ -22,6 +22,21 @@ export default function Settings() {
     if (token) {
       const userData = getUserFromToken(token);
       setUser(userData);
+      
+      // Check for OAuth callback parameters
+      const urlParams = new URLSearchParams(window.location.search);
+      const authSuccess = urlParams.get('auth');
+      
+      if (authSuccess === 'success') {
+        // Remove the URL parameters and show success message
+        window.history.replaceState({}, document.title, window.location.pathname);
+        alert('Zoom account connected successfully!');
+      } else if (authSuccess === 'error') {
+        const error = urlParams.get('error');
+        window.history.replaceState({}, document.title, window.location.pathname);
+        alert(`Failed to connect Zoom account: ${error || 'Unknown error'}`);
+      }
+      
       checkZoomConnection();
     }
   }, []);
@@ -38,10 +53,22 @@ export default function Settings() {
       
       if (response.ok) {
         const data = await response.json();
-        setZoomStatus(data);
+        console.log('Zoom status response:', data);
+        
+        // Handle the new OAuth response format
+        if (data.success && data.details) {
+          setZoomStatus({
+            connected: data.details.authenticated || false,
+            userId: data.details.accountId,
+            email: data.details.userEmail
+          });
+        } else {
+          setZoomStatus({ connected: false });
+        }
       }
     } catch (error) {
       console.error('Error checking Zoom connection:', error);
+      setZoomStatus({ connected: false });
     } finally {
       setLoading(false);
     }
@@ -61,10 +88,19 @@ export default function Settings() {
 
       if (response.ok) {
         const data = await response.json();
-        // Redirect to Zoom OAuth
-        window.location.href = data.authUrl;
+        console.log('Connect response:', data);
+        
+        // Handle the new OAuth response format
+        if (data.success && data.authUrl) {
+          // Redirect to Zoom OAuth
+          window.location.href = data.authUrl;
+        } else {
+          alert('Failed to get Zoom authorization URL. Please try again.');
+        }
       } else {
-        alert('Failed to connect to Zoom. Please try again.');
+        const errorData = await response.json();
+        console.error('Connect error:', errorData);
+        alert(`Failed to connect to Zoom: ${errorData.error || 'Please try again.'}`);
       }
     } catch (error) {
       console.error('Error connecting to Zoom:', error);
