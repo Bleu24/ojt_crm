@@ -3,6 +3,7 @@ const User = require('../models/User.model');
 const axios = require('axios');
 const { resumeUpload, uploadToCloudinary, deleteFromCloudinary, extractPublicId } = require('../utils/cloudinary');
 const { createZoomMeeting, createZoomMeetingFallback, updateZoomMeeting, deleteZoomMeeting, formatZoomDateTime } = require('../utils/zoom');
+const { sendInterviewInvitation } = require('../utils/email');
 
 // Configure multer for file uploads using Cloudinary
 exports.upload = [
@@ -253,7 +254,9 @@ exports.scheduleInterview = async (req, res) => {
           }
         };
 
-        zoomMeeting = await createZoomMeeting(meetingData, interviewerId);
+        // Use the authenticated user's ID (who connected to Zoom), not the interviewerId
+        const zoomUserId = req.user?.id || 'demo-user';
+        zoomMeeting = await createZoomMeeting(meetingData, zoomUserId);
         
         // Add Zoom meeting info to update data
         updateData.zoomMeetingId = zoomMeeting.id;
@@ -364,7 +367,9 @@ exports.scheduleInitialInterview = async (req, res) => {
         console.log('📅 Formatted Start Time:', meetingData.startTime);
         console.log('👤 Recruit:', recruit.fullName, '| Email:', recruit.email);
 
-        zoomMeeting = await createZoomMeeting(meetingData, interviewerId);
+        // Use the authenticated user's ID (who connected to Zoom), not the interviewerId
+        const zoomUserId = req.user?.id || 'demo-user';
+        zoomMeeting = await createZoomMeeting(meetingData, zoomUserId);
         
         console.log('✅ ZOOM SUCCESS - Initial Interview: Meeting created successfully');
         console.log('🆔 Meeting ID:', zoomMeeting.id);
@@ -376,20 +381,56 @@ exports.scheduleInitialInterview = async (req, res) => {
         updateData.initialInterviewZoomJoinUrl = zoomMeeting.joinUrl;
         updateData.initialInterviewZoomStartUrl = zoomMeeting.startUrl;
         updateData.initialInterviewZoomPassword = zoomMeeting.password;
+        
+        // Send email invitation
+        try {
+          console.log('📧 EMAIL: Sending interview invitation to:', recruit.email);
+          
+          const emailMeetingDetails = {
+            id: zoomMeeting.id,
+            topic: zoomMeeting.topic,
+            joinUrl: zoomMeeting.joinUrl,
+            startUrl: zoomMeeting.startUrl,
+            password: zoomMeeting.password,
+            startTime: zoomMeeting.startTime,
+            duration: zoomMeeting.duration,
+            meetingId: zoomMeeting.meetingId || zoomMeeting.id.toString()
+          };
+          
+          const senderInfo = {
+            name: req.user?.name || req.user?.firstName + ' ' + req.user?.lastName || 'HR Team',
+            email: req.user?.email || process.env.EMAIL_USER,
+            companyName: 'Our Company'
+          };
+          
+          const emailResult = await sendInterviewInvitation(
+            recruit.email,
+            emailMeetingDetails,
+            senderInfo,
+            'Initial Interview'
+          );
+          
+          console.log('✅ EMAIL SUCCESS: Interview invitation sent successfully');
+          console.log('📧 Message ID:', emailResult.messageId);
+          console.log('📬 Recipient:', recruit.email);
+          
+        } catch (emailError) {
+          console.error('❌ EMAIL ERROR: Failed to send interview invitation');
+          console.error('📝 Error Details:', emailError.message);
+          // Don't fail the whole operation if email fails
+        }
       } catch (zoomError) {
         console.error('❌ ZOOM ERROR - Initial Interview: Failed to create Zoom meeting');
         console.error('📝 Error Details:', zoomError.message);
-        console.error('📊 Full Error:', zoomError);
-        
-        // Log the specific request data that failed
-        console.error('🔍 Failed Request Data:', {
-          interviewDate,
-          interviewTime,
-          recruitName: recruit.fullName,
-          formattedDateTime: formatZoomDateTime(interviewDate, interviewTime)
-        });
-        
-        // Continue without Zoom meeting - don't fail the whole operation
+        // If auth is missing, instruct frontend to trigger OAuth
+        if (String(zoomError.message).includes('User not authenticated') || String(zoomError.message).includes('Zoom authentication required')) {
+          return res.status(401).json({
+            success: false,
+            error: 'Zoom authentication required',
+            authRequired: true
+          });
+        }
+        // Otherwise, continue without Zoom meeting
       }
     } else {
       console.log('⏭️ ZOOM SKIP - Initial Interview: Zoom meeting creation not requested (createZoomMeeting: false)');
@@ -542,7 +583,9 @@ exports.scheduleFinalInterview = async (req, res) => {
         console.log('👤 Recruit:', recruit.fullName, '| Email:', recruit.email);
         console.log('👨‍💼 Unit Manager:', req.user.userId);
 
-        zoomMeeting = await createZoomMeeting(meetingData, interviewerId);
+        // Use the authenticated user's ID (who connected to Zoom), not the interviewerId
+        const zoomUserId = req.user?.id || 'demo-user';
+        zoomMeeting = await createZoomMeeting(meetingData, zoomUserId);
         
         console.log('✅ ZOOM SUCCESS - Final Interview: Meeting created successfully');
         console.log('🆔 Meeting ID:', zoomMeeting.id);
@@ -554,22 +597,56 @@ exports.scheduleFinalInterview = async (req, res) => {
         updateData.finalInterviewZoomJoinUrl = zoomMeeting.joinUrl;
         updateData.finalInterviewZoomStartUrl = zoomMeeting.startUrl;
         updateData.finalInterviewZoomPassword = zoomMeeting.password;
+        
+        // Send email invitation
+        try {
+          console.log('📧 EMAIL: Sending final interview invitation to:', recruit.email);
+          
+          const emailMeetingDetails = {
+            id: zoomMeeting.id,
+            topic: zoomMeeting.topic,
+            joinUrl: zoomMeeting.joinUrl,
+            startUrl: zoomMeeting.startUrl,
+            password: zoomMeeting.password,
+            startTime: zoomMeeting.startTime,
+            duration: zoomMeeting.duration,
+            meetingId: zoomMeeting.meetingId || zoomMeeting.id.toString()
+          };
+          
+          const senderInfo = {
+            name: req.user?.name || req.user?.firstName + ' ' + req.user?.lastName || 'HR Team',
+            email: req.user?.email || process.env.EMAIL_USER,
+            companyName: 'Our Company'
+          };
+          
+          const emailResult = await sendInterviewInvitation(
+            recruit.email,
+            emailMeetingDetails,
+            senderInfo,
+            'Final Interview'
+          );
+          
+          console.log('✅ EMAIL SUCCESS: Final interview invitation sent successfully');
+          console.log('📧 Message ID:', emailResult.messageId);
+          console.log('📬 Recipient:', recruit.email);
+          
+        } catch (emailError) {
+          console.error('❌ EMAIL ERROR: Failed to send final interview invitation');
+          console.error('📝 Error Details:', emailError.message);
+          // Don't fail the whole operation if email fails
+        }
       } catch (zoomError) {
         console.error('❌ ZOOM ERROR - Final Interview: Failed to create Zoom meeting');
         console.error('📝 Error Details:', zoomError.message);
-        console.error('📊 Full Error:', zoomError);
-        
-        // Log the specific request data that failed
-        console.error('🔍 Failed Request Data:', {
-          interviewDate,
-          interviewTime,
-          recruitName: recruit.fullName,
-          formattedDateTime: formatZoomDateTime(interviewDate, interviewTime),
-          userRole: req.user.role,
-          userId: req.user.userId
-        });
-        
-        // Continue without Zoom meeting - don't fail the whole operation
+        // If auth is missing, instruct frontend to trigger OAuth
+        if (String(zoomError.message).includes('User not authenticated') || String(zoomError.message).includes('Zoom authentication required')) {
+          return res.status(401).json({
+            success: false,
+            error: 'Zoom authentication required',
+            authRequired: true
+          });
+        }
+        // Otherwise, continue without Zoom meeting
       }
     } else {
       console.log('⏭️ ZOOM SKIP - Final Interview: Zoom meeting creation not requested (createZoomMeeting: false)');
