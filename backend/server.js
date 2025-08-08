@@ -50,6 +50,7 @@ const reportsRoutes = require('./routes/reports.routes');
 const napReportRoutes = require('./routes/napReport.routes');
 const notificationRoutes = require('./routes/notifications.routes');
 const emailRoutes = require('./routes/email.routes');
+const zoomRoutes = require('./routes/zoom.routes');
 
 // Middlewares (Routes)
 app.use(express.json());
@@ -80,6 +81,7 @@ app.use('/api/reports', reportsRoutes);
 app.use('/api/nap-report', napReportRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/email', emailRoutes);
+app.use('/api/zoom', zoomRoutes);
 
 // Routes (sample placeholder)
 app.get('/', (req, res) => {
