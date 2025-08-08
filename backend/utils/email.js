@@ -1,4 +1,5 @@
 const nodemailer = require('nodemailer');
+const { DateTime } = require('luxon');
 
 // Create transporter with improved anti-spam configuration
 const createTransporter = () => {
@@ -69,18 +70,15 @@ const sendInterviewInvitation = async (recipientEmail, meetingDetails, senderInf
 
 // Generate HTML email template
 const generateInvitationEmailHTML = (meetingDetails, senderInfo, interviewPhase) => {
-  const startDate = new Date(meetingDetails.startTime);
-  const formattedDate = startDate.toLocaleDateString('en-US', { 
-    weekday: 'long', 
-    year: 'numeric', 
-    month: 'long', 
-    day: 'numeric' 
-  });
-  const formattedTime = startDate.toLocaleTimeString('en-US', { 
-    hour: '2-digit', 
-    minute: '2-digit',
-    timeZoneName: 'short'
-  });
+  const tz = meetingDetails.timezone || process.env.ZOOM_DEFAULT_TIMEZONE || 'Asia/Manila';
+  // Interpret startTime as an ISO string; if it includes a zone, respect it, then render in tz
+  let dt = DateTime.fromISO(meetingDetails.startTime, { setZone: true });
+  if (!dt.isValid) {
+    // Fallback for naive strings
+    dt = DateTime.fromISO(meetingDetails.startTime, { zone: tz });
+  }
+  const formattedDate = dt.setZone(tz).toFormat('EEEE, LLLL d, yyyy');
+  const formattedTime = dt.setZone(tz).toFormat('hh:mm a (ZZZZ)');
 
   return `
     <!DOCTYPE html>
@@ -109,7 +107,7 @@ const generateInvitationEmailHTML = (meetingDetails, senderInfo, interviewPhase)
         <h2>📅 Meeting Details</h2>
         <p><strong>Topic:</strong> ${meetingDetails.topic}</p>
         <p><strong>Date:</strong> ${formattedDate}</p>
-        <p><strong>Time:</strong> ${formattedTime}</p>
+  <p><strong>Time:</strong> ${formattedTime}</p>
         <p><strong>Duration:</strong> ${meetingDetails.duration} minutes</p>
         <p><strong>Meeting ID:</strong> ${meetingDetails.meetingId}</p>
         ${meetingDetails.password ? `<p><strong>Password:</strong> ${meetingDetails.password}</p>` : ''}
@@ -146,18 +144,13 @@ const generateInvitationEmailHTML = (meetingDetails, senderInfo, interviewPhase)
 
 // Generate plain text email template
 const generateInvitationEmailText = (meetingDetails, senderInfo, interviewPhase) => {
-  const startDate = new Date(meetingDetails.startTime);
-  const formattedDate = startDate.toLocaleDateString('en-US', { 
-    weekday: 'long', 
-    year: 'numeric', 
-    month: 'long', 
-    day: 'numeric' 
-  });
-  const formattedTime = startDate.toLocaleTimeString('en-US', { 
-    hour: '2-digit', 
-    minute: '2-digit',
-    timeZoneName: 'short'
-  });
+  const tz = meetingDetails.timezone || process.env.ZOOM_DEFAULT_TIMEZONE || 'Asia/Manila';
+  let dt = DateTime.fromISO(meetingDetails.startTime, { setZone: true });
+  if (!dt.isValid) {
+    dt = DateTime.fromISO(meetingDetails.startTime, { zone: tz });
+  }
+  const formattedDate = dt.setZone(tz).toFormat('EEEE, LLLL d, yyyy');
+  const formattedTime = dt.setZone(tz).toFormat('hh:mm a (ZZZZ)');
 
   // Plain-text only, no emojis; simple lines to prevent quoted-printable artifacts
   return [
