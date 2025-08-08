@@ -30,6 +30,35 @@ const userSchema = new mongoose.Schema({
   passwordHash: {
     type: String,
     required: true,
+  },
+  // Zoom OAuth Integration
+  zoomAccessToken: {
+    type: String,
+    default: null
+  },
+  zoomRefreshToken: {
+    type: String,
+    default: null
+  },
+  zoomTokenExpiry: {
+    type: Date,
+    default: null
+  },
+  zoomUserId: {
+    type: String,
+    default: null
+  },
+  zoomEmail: {
+    type: String,
+    default: null
+  },
+  zoomConnected: {
+    type: Boolean,
+    default: false
+  },
+  zoomConnectedAt: {
+    type: Date,
+    default: null
   }
 }, { timestamps: true });
 
