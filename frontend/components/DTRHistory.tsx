@@ -487,7 +487,7 @@ export default function DTRHistory() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="w-12 h-12 bg-gradient-to-br from-purple-400 to-pink-400 rounded-full animate-spin flex items-center justify-center">
+        <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-cyan-400 rounded-full animate-spin flex items-center justify-center">
           <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full"></div>
         </div>
       </div>
@@ -528,7 +528,7 @@ export default function DTRHistory() {
             placeholder="Search by accomplishment or date..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+            className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
         <div>
@@ -536,7 +536,7 @@ export default function DTRHistory() {
             type="date"
             value={dateFilter}
             onChange={(e) => setDateFilter(e.target.value)}
-            className="bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+            className="bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
       </div>
@@ -546,7 +546,7 @@ export default function DTRHistory() {
         <h3 className="text-xl font-semibold text-white mb-4">All DTR Entries</h3>
         {filteredEntries.length === 0 ? (
           <div className="text-center py-12">
-            <div className="w-16 h-16 bg-gradient-to-br from-purple-400 to-pink-400 rounded-full mx-auto mb-4 flex items-center justify-center">
+            <div className="w-16 h-16 bg-gradient-to-br from-blue-400 to-cyan-400 rounded-full mx-auto mb-4 flex items-center justify-center">
               <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
               </svg>
@@ -584,7 +584,7 @@ export default function DTRHistory() {
                     {/* Hours worked display */}
                     <div className="text-right">
                       {entry.hoursWorked > 0 && (
-                        <div className="text-purple-400 font-semibold">
+                        <div className="text-blue-400 font-semibold">
                           {entry.hoursWorked.toFixed(1)}h
                         </div>
                       )}
@@ -596,7 +596,7 @@ export default function DTRHistory() {
                     {/* Edit accomplishment button */}
                     <button
                       onClick={() => startEditingAccomplishment(entry)}
-                      className="px-3 py-1 bg-purple-500/20 text-purple-400 rounded-lg hover:bg-purple-500/30 transition-colors text-sm flex items-center space-x-1"
+                      className="px-3 py-1 bg-blue-500/20 text-blue-400 rounded-lg hover:bg-blue-500/30 transition-colors text-sm flex items-center space-x-1"
                       title="Edit accomplishment"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -651,7 +651,7 @@ export default function DTRHistory() {
                 value={editAccomplishment}
                 onChange={(e) => setEditAccomplishment(e.target.value)}
                 rows={6}
-                className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="Describe what you accomplished during this work session..."
               />
             </div>
@@ -668,7 +668,7 @@ export default function DTRHistory() {
               </button>
               <button
                 onClick={handleUpdateAccomplishment}
-                className="px-6 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-600 hover:to-pink-600 transition-all"
+                className="px-6 py-2 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-lg hover:from-blue-600 hover:to-cyan-600 transition-all"
               >
                 Save Changes
               </button>
@@ -715,7 +715,7 @@ export default function DTRHistory() {
                   {['CSV', 'JSON'].map((format) => (
                     <button
                       key={format}
-                      className="px-4 py-2 bg-purple-500/20 text-purple-400 rounded-lg text-sm"
+                      className="px-4 py-2 bg-blue-500/20 text-blue-400 rounded-lg text-sm"
                     >
                       {format} Format
                     </button>
@@ -783,7 +783,7 @@ export default function DTRHistory() {
                 accept=".csv,.json"
                 onChange={handleFileImport}
                 disabled={importing}
-                className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-purple-500 file:text-white file:cursor-pointer hover:file:bg-purple-600 disabled:opacity-50"
+                className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-blue-500 file:text-white file:cursor-pointer hover:file:bg-blue-600 disabled:opacity-50"
               />
               <p className="text-gray-400 text-xs mt-2">
                 Supported formats: CSV (recommended), JSON. For Excel files, please convert to CSV first.
@@ -852,7 +852,7 @@ export default function DTRHistory() {
                   setImportResults(null);
                   setError('');
                 }}
-                className="px-6 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-600 hover:to-pink-600 transition-all"
+                className="px-6 py-2 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-lg hover:from-blue-600 hover:to-cyan-600 transition-all"
               >
                 Close
               </button>

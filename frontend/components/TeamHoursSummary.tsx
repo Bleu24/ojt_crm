@@ -90,13 +90,13 @@ export default function TeamHoursSummary() {
     if (member.role !== 'intern') return 'text-blue-400';
     if (!member.requiredHours || member.requiredHours === 0) return 'text-yellow-400';
     if (member.isComplete) return 'text-green-400';
-    return 'text-purple-400';
+    return 'text-blue-400';
   };
 
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="w-12 h-12 bg-gradient-to-br from-purple-400 to-pink-400 rounded-full animate-spin flex items-center justify-center">
+        <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-cyan-400 rounded-full animate-spin flex items-center justify-center">
           <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full"></div>
         </div>
       </div>
@@ -113,7 +113,7 @@ export default function TeamHoursSummary() {
         </div>
         <button
           onClick={fetchTeamHours}
-          className="px-4 py-2 bg-purple-500/20 text-purple-400 rounded-lg hover:bg-purple-500/30 transition-colors text-sm flex items-center space-x-2"
+          className="px-4 py-2 bg-blue-500/20 text-blue-400 rounded-lg hover:bg-blue-500/30 transition-colors text-sm flex items-center space-x-2"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -138,7 +138,7 @@ export default function TeamHoursSummary() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-4">
                     {/* Avatar */}
-                    <div className="w-12 h-12 bg-gradient-to-br from-purple-400 to-pink-400 rounded-full flex items-center justify-center text-white font-semibold">
+                    <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-cyan-400 rounded-full flex items-center justify-center text-white font-semibold">
                       {member.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
                     </div>
                     
@@ -202,7 +202,7 @@ export default function TeamHoursSummary() {
           </div>
         ) : (
           <div className="text-center py-12">
-            <div className="w-16 h-16 bg-gradient-to-br from-purple-400 to-pink-400 rounded-full mx-auto mb-4 flex items-center justify-center">
+            <div className="w-16 h-16 bg-gradient-to-br from-blue-400 to-cyan-400 rounded-full mx-auto mb-4 flex items-center justify-center">
               <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
               </svg>

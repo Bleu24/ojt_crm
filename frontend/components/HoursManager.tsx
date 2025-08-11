@@ -132,15 +132,15 @@ export default function HoursManager() {
   const getProgressColor = () => {
     const percentage = getProgressPercentage();
     if (percentage >= 100) return 'from-green-500 to-emerald-500';
-    if (percentage >= 75) return 'from-blue-500 to-purple-500';
+    if (percentage >= 75) return 'from-blue-500 to-cyan-500';
     if (percentage >= 50) return 'from-yellow-500 to-orange-500';
-    return 'from-red-500 to-pink-500';
+    return 'from-red-500 to-rose-500';
   };
 
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="w-12 h-12 bg-gradient-to-br from-purple-400 to-pink-400 rounded-full animate-spin flex items-center justify-center">
+        <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-cyan-400 rounded-full animate-spin flex items-center justify-center">
           <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full"></div>
         </div>
       </div>
@@ -158,7 +158,7 @@ export default function HoursManager() {
         {hoursData?.requiredHours && (
           <button
             onClick={() => setShowSetHours(true)}
-            className="px-4 py-2 bg-purple-500/20 text-purple-400 rounded-lg hover:bg-purple-500/30 transition-colors text-sm"
+            className="px-4 py-2 bg-blue-500/20 text-blue-400 rounded-lg hover:bg-blue-500/30 transition-colors text-sm"
           >
             Update Required Hours
           </button>
@@ -204,32 +204,8 @@ export default function HoursManager() {
                   />
                   <defs>
                     <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                      <stop
-                        offset="0%"
-                        className="stop-color-current"
-                        style={{
-                          stopColor: getProgressColor().includes('green')
-                            ? '#10b981'
-                            : getProgressColor().includes('blue')
-                              ? 'rgb(var(--color-secondary))'
-                              : getProgressColor().includes('yellow')
-                                ? '#f59e0b'
-                                : '#ef4444',
-                        }}
-                      />
-                      <stop
-                        offset="100%"
-                        className="stop-color-current"
-                        style={{
-                          stopColor: getProgressColor().includes('green')
-                            ? '#059669'
-                            : getProgressColor().includes('blue')
-                              ? 'rgb(var(--color-accent))'
-                              : getProgressColor().includes('yellow')
-                                ? '#ea580c'
-                                : '#ec4899',
-                        }}
-                      />
+                      <stop offset="0%" className="stop-color-current" style={{ stopColor: getProgressColor().includes('green') ? '#10b981' : getProgressColor().includes('blue') ? '#3b82f6' : getProgressColor().includes('yellow') ? '#f59e0b' : '#ef4444' }} />
+                      <stop offset="100%" className="stop-color-current" style={{ stopColor: getProgressColor().includes('green') ? '#059669' : getProgressColor().includes('blue') ? '#0ea5e9' : getProgressColor().includes('yellow') ? '#ea580c' : '#ef4444' }} />
                     </linearGradient>
                   </defs>
                 </svg>
@@ -281,13 +257,13 @@ export default function HoursManager() {
 
             {/* Additional Info */}
             {hoursData.requiredHours && hoursData.requiredHours > 0 && (
-              <div className="bg-purple-500/10 border border-purple-500/20 rounded-lg p-4">
+              <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4">
                 <div className="flex items-start space-x-3">
-                  <svg className="w-5 h-5 text-purple-400 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5 text-blue-400 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                   <div>
-                    <p className="text-purple-400 font-medium text-sm mb-1">Progress Update</p>
+                    <p className="text-blue-400 font-medium text-sm mb-1">Progress Update</p>
                     <p className="text-gray-300 text-sm">
                       {hoursData.isComplete 
                         ? "Congratulations! You have completed your required internship hours." 
@@ -339,7 +315,7 @@ export default function HoursManager() {
                 value={requiredHoursInput}
                 onChange={(e) => setRequiredHoursInput(e.target.value)}
                 placeholder="e.g. 500"
-                className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
               <p className="text-gray-400 text-xs mt-2">
                 Enter the total number of hours required to complete your internship
@@ -361,7 +337,7 @@ export default function HoursManager() {
               <button
                 onClick={handleSetRequiredHours}
                 disabled={settingHours || !requiredHoursInput}
-                className="px-6 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-600 hover:to-pink-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-6 py-2 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-lg hover:from-blue-600 hover:to-cyan-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {settingHours ? 'Setting...' : 'Set Hours'}
               </button>

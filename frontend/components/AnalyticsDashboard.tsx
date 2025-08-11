@@ -152,12 +152,12 @@ export default function AnalyticsDashboard() {
         {
           label: 'Team Productivity (%)',
           data: analyticsData.teamProductivity.map(item => item.productivity),
-          borderColor: 'rgb(139, 92, 246)', // purple-500
-          backgroundColor: 'rgba(139, 92, 246, 0.1)',
+          borderColor: 'rgb(59, 130, 246)', // blue-500
+          backgroundColor: 'rgba(59, 130, 246, 0.1)',
           fill: true,
           tension: 0.4,
-          pointBackgroundColor: 'rgb(139, 92, 246)',
-          pointBorderColor: 'rgb(139, 92, 246)',
+          pointBackgroundColor: 'rgb(59, 130, 246)',
+          pointBorderColor: 'rgb(59, 130, 246)',
           pointBorderWidth: 2,
           pointRadius: 5,
           pointHoverRadius: 7,
@@ -217,7 +217,7 @@ export default function AnalyticsDashboard() {
     }
 
     const colors = [
-      'rgba(139, 92, 246, 0.8)', // purple-500
+      'rgba(59, 130, 246, 0.8)', // blue-500
       'rgba(6, 182, 212, 0.8)',  // cyan-500
       'rgba(16, 185, 129, 0.8)', // green-500
       'rgba(245, 158, 11, 0.8)', // amber-500
@@ -253,8 +253,8 @@ export default function AnalyticsDashboard() {
         {
           label: 'Hours Worked',
           data: analyticsData.memberPerformance.map(item => item.hours),
-          backgroundColor: 'rgba(139, 92, 246, 0.8)', // purple-500
-          borderColor: 'rgb(139, 92, 246)',
+          backgroundColor: 'rgba(59, 130, 246, 0.8)', // blue-500
+          borderColor: 'rgb(59, 130, 246)',
           borderWidth: 2,
           borderRadius: 6,
           borderSkipped: false,
@@ -285,7 +285,7 @@ export default function AnalyticsDashboard() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="w-12 h-12 bg-gradient-to-br from-purple-400 to-pink-400 rounded-full animate-spin flex items-center justify-center">
+        <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-cyan-400 rounded-full animate-spin flex items-center justify-center">
           <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full"></div>
         </div>
       </div>
@@ -318,7 +318,7 @@ export default function AnalyticsDashboard() {
           <select 
             value={selectedPeriod} 
             onChange={(e) => setSelectedPeriod(e.target.value)}
-            className="bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+            className="bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="week">This Week</option>
             <option value="month">This Month</option>
@@ -396,8 +396,8 @@ export default function AnalyticsDashboard() {
                       : 0}%
                   </p>
                 </div>
-                <div className="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center">
-                  <svg className="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center">
+                  <svg className="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                   </svg>
                 </div>
