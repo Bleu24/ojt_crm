@@ -1,13 +1,13 @@
 @import "tailwindcss";
 
 :root {
-  --background: #0f0f23;
+  --background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
   --foreground: #ffffff;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0f0f23;
+    --background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
     --foreground: #ffffff;
   }
 }
@@ -42,15 +42,15 @@ body {
 
 /* Glassmorphism effect */
 .glass {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(59, 130, 246, 0.1);
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(59, 130, 246, 0.2);
 }
 
 .glass-strong {
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(59, 130, 246, 0.15);
   backdrop-filter: blur(15px);
-  border: 1px solid rgba(255, 255, 255, 0.25);
+  border: 1px solid rgba(59, 130, 246, 0.3);
 }
 
 /* Hover effects */
@@ -127,5 +127,5 @@ body {
 }
 
 .glow-blue {
-  box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 0 20px rgba(37, 99, 235, 0.4);
 }
