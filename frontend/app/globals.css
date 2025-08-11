@@ -1,13 +1,13 @@
 @import "tailwindcss";
 
 :root {
-  --background: #0f0f23;
+  --background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
   --foreground: #ffffff;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0f0f23;
+    --background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
     --foreground: #ffffff;
   }
 }
@@ -32,25 +32,25 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: linear-gradient(to bottom, #8b5cf6, #ec4899);
+  background: linear-gradient(to bottom, #3b82f6, #60a5fa);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(to bottom, #7c3aed, #db2777);
+  background: linear-gradient(to bottom, #2563eb, #3b82f6);
 }
 
 /* Glassmorphism effect */
 .glass {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(59, 130, 246, 0.1);
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(59, 130, 246, 0.2);
 }
 
 .glass-strong {
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(59, 130, 246, 0.15);
   backdrop-filter: blur(15px);
-  border: 1px solid rgba(255, 255, 255, 0.25);
+  border: 1px solid rgba(59, 130, 246, 0.3);
 }
 
 /* Hover effects */
@@ -65,7 +65,7 @@ body {
 
 /* Gradient text */
 .gradient-text {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -94,7 +94,7 @@ body {
 /* Custom borders */
 .border-gradient {
   border: 1px solid;
-  border-image: linear-gradient(135deg, #667eea, #764ba2, #f093fb, #f5576c) 1;
+  border-image: linear-gradient(135deg, #1e3a8a, #3b82f6, #60a5fa, #93c5fd) 1;
 }
 
 /* Loading spinner */
@@ -117,12 +117,13 @@ body {
   text-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
 }
 
+
 .glow {
-  box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
 }
 
 .glow-lg {
-  box-shadow: 0 0 40px rgba(139, 92, 246, 0.4);
+  box-shadow: 0 0 40px rgba(59, 130, 246, 0.4);
 }
 
 .glow-pink {
@@ -130,5 +131,5 @@ body {
 }
 
 .glow-blue {
-  box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 0 20px rgba(37, 99, 235, 0.4);
 }
