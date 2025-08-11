@@ -174,7 +174,7 @@ export default function TeamStatus() {
         <div className="absolute inset-0 bg-gradient-to-r from-emerald-600/20 to-cyan-600/20 rounded-xl blur opacity-75 group-hover:opacity-100 transition-opacity"></div>
         <div className="relative backdrop-blur-xl bg-white/10 border border-white/20 rounded-xl p-6">
           <div className="text-center text-gray-400 py-8">
-            <div className="animate-spin w-8 h-8 border-2 border-purple-400 border-t-transparent rounded-full mx-auto mb-4"></div>
+            <div className="animate-spin w-8 h-8 border-2 border-blue-400 border-t-transparent rounded-full mx-auto mb-4"></div>
             <p>Loading team status...</p>
           </div>
         </div>
@@ -185,7 +185,7 @@ export default function TeamStatus() {
   if (error) {
     return (
       <div className="group relative">
-        <div className="absolute inset-0 bg-gradient-to-r from-red-600/20 to-pink-600/20 rounded-xl blur opacity-75 group-hover:opacity-100 transition-opacity"></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-red-600/20 to-rose-600/20 rounded-xl blur opacity-75 group-hover:opacity-100 transition-opacity"></div>
         <div className="relative backdrop-blur-xl bg-white/10 border border-white/20 rounded-xl p-6">
           <div className="text-center text-red-400 py-8">
             <svg className="w-12 h-12 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -236,7 +236,7 @@ export default function TeamStatus() {
                 >
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-gradient-to-br from-purple-400 to-pink-400 rounded-full flex items-center justify-center text-white font-semibold text-sm">
+                      <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-cyan-400 rounded-full flex items-center justify-center text-white font-semibold text-sm">
                         {member.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
                       </div>
                       <div>
@@ -282,12 +282,12 @@ export default function TeamStatus() {
       {/* Accomplishments Panel */}
       {selectedMember && (
         <div className="group relative">
-          <div className="absolute inset-0 bg-gradient-to-r from-purple-600/20 to-pink-600/20 rounded-xl blur opacity-75 group-hover:opacity-100 transition-opacity"></div>
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-cyan-600/20 rounded-xl blur opacity-75 group-hover:opacity-100 transition-opacity"></div>
           <div className="relative backdrop-blur-xl bg-white/10 border border-white/20 rounded-xl p-6">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center space-x-3">
                 <h3 className="text-xl font-semibold text-white">Accomplishments</h3>
-                <div className="px-3 py-1 bg-purple-500/20 text-purple-400 rounded-full text-sm">
+                <div className="px-3 py-1 bg-blue-500/20 text-blue-400 rounded-full text-sm">
                   {selectedMember.name}
                 </div>
               </div>
@@ -309,14 +309,14 @@ export default function TeamStatus() {
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
                 max={new Date().toISOString().split('T')[0]}
-                className="bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                className="bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
 
             {/* Accomplishments List */}
             {loadingAccomplishments ? (
               <div className="text-center text-gray-400 py-8">
-                <div className="animate-spin w-6 h-6 border-2 border-purple-400 border-t-transparent rounded-full mx-auto mb-4"></div>
+                <div className="animate-spin w-6 h-6 border-2 border-blue-400 border-t-transparent rounded-full mx-auto mb-4"></div>
                 <p>Loading accomplishments...</p>
               </div>
             ) : accomplishments.length === 0 ? (

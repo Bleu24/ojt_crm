@@ -835,7 +835,7 @@ export default function RecruitsManagement() {
     switch (status) {
       case 'Applied': return 'bg-blue-500/20 text-blue-400';
       case 'Pending': return 'bg-orange-500/20 text-orange-400'; // For scheduled interviews
-      case 'Pending Final Interview': return 'bg-purple-500/20 text-purple-400'; // Awaiting final interview
+      case 'Pending Final Interview': return 'bg-blue-500/20 text-blue-400'; // Awaiting final interview
       case 'Interviewed': return 'bg-yellow-500/20 text-yellow-400';
       case 'Hired': return 'bg-green-500/20 text-green-400';
       case 'Rejected': return 'bg-red-500/20 text-red-400';
@@ -959,7 +959,7 @@ export default function RecruitsManagement() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="w-12 h-12 bg-gradient-to-br from-purple-400 to-pink-400 rounded-full animate-spin flex items-center justify-center">
+        <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-cyan-400 rounded-full animate-spin flex items-center justify-center">
           <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full"></div>
         </div>
       </div>
@@ -982,7 +982,7 @@ export default function RecruitsManagement() {
         </div>
         <button
           onClick={() => setShowAddForm(true)}
-          className="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-600 hover:to-pink-600 transition-all flex items-center space-x-2"
+          className="px-4 py-2 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-lg hover:from-blue-600 hover:to-cyan-600 transition-all flex items-center space-x-2"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -1006,13 +1006,13 @@ export default function RecruitsManagement() {
             placeholder="Search by name, email, or contact number..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+            className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+          className="bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
           style={{
             backgroundColor: 'rgba(255, 255, 255, 0.1)',
             color: 'white'
@@ -1063,7 +1063,7 @@ export default function RecruitsManagement() {
                       <div className="text-gray-400 text-sm">{recruit.email}</div>
                       <div className="text-gray-400 text-sm">{recruit.permanentAddress}</div>
                       {recruit.source && (
-                        <div className="text-purple-400 text-xs mt-1 bg-purple-500/20 px-2 py-1 rounded-full inline-block">
+                        <div className="text-blue-400 text-xs mt-1 bg-blue-500/20 px-2 py-1 rounded-full inline-block">
                           Source: {recruit.source}
                         </div>
                       )}
@@ -1087,7 +1087,7 @@ export default function RecruitsManagement() {
                       <select
                         value={recruit.applicationStatus}
                         onChange={(e) => handleStatusUpdate(recruit._id, e.target.value)}
-                        className="text-xs bg-white/10 border border-white/20 rounded px-2 py-1 text-white focus:outline-none focus:ring-1 focus:ring-purple-500"
+                        className="text-xs bg-white/10 border border-white/20 rounded px-2 py-1 text-white focus:outline-none focus:ring-1 focus:ring-blue-500"
                       >
                         <option value="Applied" style={{ backgroundColor: '#1f2937', color: 'white' }}>Applied</option>
                         <option value="Pending" style={{ backgroundColor: '#1f2937', color: 'white' }}>Pending Interview</option>
@@ -1249,7 +1249,7 @@ export default function RecruitsManagement() {
                     required
                     value={formData.fullName}
                     onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                    className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
 
@@ -1262,7 +1262,7 @@ export default function RecruitsManagement() {
                     required
                     value={formData.contactNumber}
                     onChange={(e) => setFormData({ ...formData, contactNumber: e.target.value })}
-                    className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
 
@@ -1275,7 +1275,7 @@ export default function RecruitsManagement() {
                     required
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
 
@@ -1287,7 +1287,7 @@ export default function RecruitsManagement() {
                     required
                     value={formData.educationalStatus}
                     onChange={(e) => setFormData({ ...formData, educationalStatus: e.target.value as any })}
-                    className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="UNDERGRAD" style={{ backgroundColor: '#1f2937', color: 'white' }}>Undergraduate</option>
                     <option value="GRADUATE" style={{ backgroundColor: '#1f2937', color: 'white' }}>Graduate</option>
@@ -1303,7 +1303,7 @@ export default function RecruitsManagement() {
                     type="text"
                     value={formData.course}
                     onChange={(e) => setFormData({ ...formData, course: e.target.value })}
-                    className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
 
@@ -1315,7 +1315,7 @@ export default function RecruitsManagement() {
                     type="text"
                     value={formData.school}
                     onChange={(e) => setFormData({ ...formData, school: e.target.value })}
-                    className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
 
@@ -1326,7 +1326,7 @@ export default function RecruitsManagement() {
                   <select
                     value={formData.source}
                     onChange={(e) => setFormData({ ...formData, source: e.target.value })}
-                    className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="" style={{ backgroundColor: '#1f2937', color: 'white' }}>Select Source</option>
                     <option value="Job Portal" style={{ backgroundColor: '#1f2937', color: 'white' }}>Job Portal</option>
@@ -1352,7 +1352,7 @@ export default function RecruitsManagement() {
                   value={formData.permanentAddress}
                   onChange={(e) => setFormData({ ...formData, permanentAddress: e.target.value })}
                   rows={3}
-                  className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
@@ -1365,7 +1365,7 @@ export default function RecruitsManagement() {
                   required
                   value={formData.dateApplied}
                   onChange={(e) => setFormData({ ...formData, dateApplied: e.target.value })}
-                  className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
@@ -1377,7 +1377,7 @@ export default function RecruitsManagement() {
                   type="file"
                   accept=".pdf,.doc,.docx"
                   onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
-                  className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-purple-500 file:text-white file:cursor-pointer hover:file:bg-purple-600"
+                  className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-blue-500 file:text-white file:cursor-pointer hover:file:bg-blue-600"
                 />
               </div>
 
@@ -1394,7 +1394,7 @@ export default function RecruitsManagement() {
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-600 hover:to-pink-600 transition-all"
+                  className="px-6 py-2 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-lg hover:from-blue-600 hover:to-cyan-600 transition-all"
                 >
                   Add Recruit
                 </button>
@@ -1445,7 +1445,7 @@ export default function RecruitsManagement() {
                   required
                   value={scheduleData.interviewDate}
                   onChange={(e) => setScheduleData({ ...scheduleData, interviewDate: e.target.value })}
-                  className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
@@ -1458,7 +1458,7 @@ export default function RecruitsManagement() {
                   required
                   value={scheduleData.interviewTime}
                   onChange={(e) => setScheduleData({ ...scheduleData, interviewTime: e.target.value })}
-                  className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
@@ -1469,7 +1469,7 @@ export default function RecruitsManagement() {
                 <select
                   value={scheduleData.interviewerId}
                   onChange={(e) => setScheduleData({ ...scheduleData, interviewerId: e.target.value })}
-                  className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="" style={{ backgroundColor: '#1f2937', color: 'white' }}>Select Interviewer</option>
                   {users
@@ -1501,7 +1501,7 @@ export default function RecruitsManagement() {
                   onChange={(e) => setScheduleData({ ...scheduleData, interviewNotes: e.target.value })}
                   rows={3}
                   placeholder="Additional notes for the interview..."
-                  className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
@@ -1546,7 +1546,7 @@ export default function RecruitsManagement() {
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-600 hover:to-pink-600 transition-all"
+                  className="px-6 py-2 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-lg hover:from-blue-600 hover:to-cyan-600 transition-all"
                 >
                   Schedule {scheduleData.interviewType === 'initial' ? 'Initial' : 'Final'} Interview
                 </button>
@@ -1590,7 +1590,7 @@ export default function RecruitsManagement() {
                 <select
                   value={selectedUnitManager}
                   onChange={(e) => setSelectedUnitManager(e.target.value)}
-                  className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
                 >
                   <option value="" style={{ backgroundColor: '#1f2937', color: 'white' }}>Select Unit Manager</option>

@@ -99,7 +99,7 @@ export default function TeamReports() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="w-12 h-12 bg-gradient-to-br from-purple-400 to-pink-400 rounded-full animate-spin flex items-center justify-center">
+        <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-cyan-400 rounded-full animate-spin flex items-center justify-center">
           <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full"></div>
         </div>
       </div>
@@ -128,7 +128,7 @@ export default function TeamReports() {
               onClick={() => setSelectedPeriod(period)}
               className={`px-4 py-2 rounded-lg font-medium text-sm transition-all duration-300 ${
                 selectedPeriod === period
-                  ? 'bg-gradient-to-r from-purple-500 to-pink-600 text-white'
+                  ? 'bg-gradient-to-r from-blue-500 to-cyan-600 text-white'
                   : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white'
               }`}
             >
@@ -204,8 +204,8 @@ export default function TeamReports() {
                   <p className="text-sm font-medium text-gray-400 mb-1">Avg Productivity</p>
                   <p className="text-2xl sm:text-3xl font-bold text-white">{reportData.avgProductivity.toFixed(1)}%</p>
                 </div>
-                <div className="w-12 h-12 bg-purple-500/20 rounded-lg flex items-center justify-center flex-shrink-0 ml-4">
-                  <svg className="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center flex-shrink-0 ml-4">
+                  <svg className="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                   </svg>
                 </div>
@@ -251,7 +251,7 @@ export default function TeamReports() {
                     <tr key={member._id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
                       <td className="py-4">
                         <div className="flex items-center space-x-3">
-                          <div className="w-10 h-10 bg-gradient-to-br from-purple-400 to-pink-400 rounded-full flex items-center justify-center">
+                          <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-cyan-400 rounded-full flex items-center justify-center">
                             <span className="text-white font-semibold text-sm">
                               {member.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
                             </span>
@@ -263,7 +263,7 @@ export default function TeamReports() {
                         </div>
                       </td>
                       <td className="py-4">
-                        <span className="text-purple-400 capitalize text-sm">{member.role}</span>
+                        <span className="text-blue-400 capitalize text-sm">{member.role}</span>
                       </td>
                       <td className="py-4">
                         <span className="text-white font-medium">{member.totalHours.toFixed(1)}h</span>
@@ -308,7 +308,7 @@ export default function TeamReports() {
           <div className="bg-white/5 backdrop-blur-xl rounded-xl p-4 sm:p-6 border border-white/10">
             <h3 className="text-xl font-semibold text-white mb-4 sm:mb-6">Export Reports</h3>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <button className="flex items-center justify-center space-x-3 p-4 sm:p-5 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 rounded-lg transition-all duration-300 hover:scale-105">
+              <button className="flex items-center justify-center space-x-3 p-4 sm:p-5 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 rounded-lg transition-all duration-300 hover:scale-105">
                 <svg className="w-5 h-5 text-white flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>

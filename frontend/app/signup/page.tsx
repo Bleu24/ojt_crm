@@ -73,19 +73,19 @@ export default function SignUp() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative overflow-hidden flex items-center justify-center">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 relative overflow-hidden flex items-center justify-center">
       {/* Background gradient overlays */}
-      <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-pink-500/10"></div>
+      <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 via-blue-500/10 to-cyan-500/10"></div>
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(120,119,198,0.1),transparent_50%)]"></div>
       
       {/* Main Content */}
       <div className="relative z-10 w-full max-w-md mx-auto px-4 sm:px-6 lg:px-8">
         <div className="group relative">
-          <div className="absolute inset-0 bg-gradient-to-r from-purple-600/20 to-pink-600/20 rounded-2xl blur opacity-75 group-hover:opacity-100 transition-opacity"></div>
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-cyan-600/20 rounded-2xl blur opacity-75 group-hover:opacity-100 transition-opacity"></div>
           <div className="relative backdrop-blur-xl bg-white/10 border border-white/20 rounded-2xl p-6 sm:p-8 hover:bg-white/15 transition-all duration-300">
             {/* Logo */}
             <div className="text-center mb-6">
-              <div className="w-16 h-16 bg-gradient-to-br from-purple-400 to-pink-400 rounded-xl mx-auto mb-4 flex items-center justify-center">
+              <div className="w-16 h-16 bg-gradient-to-br from-blue-400 to-cyan-400 rounded-xl mx-auto mb-4 flex items-center justify-center">
                 <span className="text-white font-bold text-2xl">C</span>
               </div>
               <h1 className="text-2xl font-bold text-white">Create Account</h1>
@@ -112,7 +112,7 @@ export default function SignUp() {
                   value={formData.name}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                  className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                   placeholder="Enter your full name"
                 />
               </div>
@@ -128,7 +128,7 @@ export default function SignUp() {
                   value={formData.email}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                  className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                   placeholder="Enter your email"
                 />
               </div>
@@ -207,7 +207,7 @@ export default function SignUp() {
                   value={formData.password}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                  className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                   placeholder="Create a password"
                 />
               </div>
@@ -223,7 +223,7 @@ export default function SignUp() {
                   value={formData.confirmPassword}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                  className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                   placeholder="Confirm your password"
                 />
               </div>
@@ -231,7 +231,7 @@ export default function SignUp() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full py-3 px-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold rounded-lg hover:from-purple-600 hover:to-pink-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-105"
+                className="w-full py-3 px-4 bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-semibold rounded-lg hover:from-blue-600 hover:to-cyan-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-105"
               >
                 {isLoading ? 'Creating Account...' : 'Create Account'}
               </button>
@@ -241,7 +241,7 @@ export default function SignUp() {
             <div className="mt-6 text-center">
               <p className="text-gray-400">
                 Already have an account?{' '}
-                <Link href="/login" className="text-purple-400 hover:text-purple-300 font-medium transition-colors">
+                <Link href="/login" className="text-blue-400 hover:text-blue-300 font-medium transition-colors">
                   Sign In
                 </Link>
               </p>

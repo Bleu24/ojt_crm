@@ -127,9 +127,9 @@ export default function Dashboard() {
 
   return (
     <AuthGuard>
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative overflow-hidden">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 relative overflow-hidden">
       {/* Background gradient overlays */}
-      <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-pink-500/10"></div>
+      <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 via-blue-500/10 to-cyan-500/10"></div>
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(120,119,198,0.1),transparent_50%)]"></div>
       
       {/* Header */}
@@ -138,7 +138,7 @@ export default function Dashboard() {
           <div className="flex justify-between items-center h-14 sm:h-16">
             <div className="flex items-center space-x-2 sm:space-x-4">
               <div className="flex items-center space-x-2 sm:space-x-3">
-                <div className="w-7 h-7 sm:w-8 sm:h-8 bg-gradient-to-br from-purple-400 to-pink-400 rounded-lg flex items-center justify-center">
+                <div className="w-7 h-7 sm:w-8 sm:h-8 bg-gradient-to-br from-blue-400 to-cyan-400 rounded-lg flex items-center justify-center">
                   <span className="text-white font-bold text-xs sm:text-sm">C</span>
                 </div>
                 <h1 className="text-lg sm:text-xl font-bold text-white">CRM Dashboard</h1>
@@ -193,7 +193,7 @@ export default function Dashboard() {
                           <p className="text-xs text-gray-400 truncate">
                             {user ? user.email : ''}
                           </p>
-                          <p className="text-xs text-purple-400">
+                          <p className="text-xs text-blue-400">
                             {user ? formatRole(user.role) : ''}
                           </p>
                         </div>
@@ -250,7 +250,7 @@ export default function Dashboard() {
                   onClick={() => setActiveTab(tab)}
                   className={`py-3 sm:py-4 px-1 border-b-2 font-medium text-xs sm:text-sm capitalize transition-colors whitespace-nowrap ${
                     activeTab === tab
-                      ? 'border-purple-400 text-purple-400'
+                      ? 'border-blue-400 text-blue-400'
                       : 'border-transparent text-gray-400 hover:text-white hover:border-white/20'
                   }`}
                 >
@@ -265,7 +265,7 @@ export default function Dashboard() {
                   onClick={() => setActiveTab(tab)}
                   className={`py-3 sm:py-4 px-1 border-b-2 font-medium text-xs sm:text-sm capitalize transition-colors whitespace-nowrap ${
                     activeTab === tab
-                      ? 'border-purple-400 text-purple-400'
+                      ? 'border-blue-400 text-blue-400'
                       : 'border-transparent text-gray-400 hover:text-white hover:border-white/20'
                   }`}
                 >
@@ -282,7 +282,7 @@ export default function Dashboard() {
                       onClick={() => setActiveTab(tab)}
                       className={`py-3 sm:py-4 px-1 border-b-2 font-medium text-xs sm:text-sm capitalize transition-colors whitespace-nowrap ${
                         activeTab === tab
-                          ? 'border-purple-400 text-purple-400'
+                          ? 'border-blue-400 text-blue-400'
                           : 'border-transparent text-gray-400 hover:text-white hover:border-white/20'
                       }`}
                     >
@@ -295,7 +295,7 @@ export default function Dashboard() {
                       onClick={() => setActiveTab(tab)}
                       className={`py-3 sm:py-4 px-1 border-b-2 font-medium text-xs sm:text-sm capitalize transition-colors whitespace-nowrap ${
                         activeTab === tab
-                          ? 'border-purple-400 text-purple-400'
+                          ? 'border-blue-400 text-blue-400'
                           : 'border-transparent text-gray-400 hover:text-white hover:border-white/20'
                       }`}
                     >
@@ -309,7 +309,7 @@ export default function Dashboard() {
                     onClick={() => setActiveTab(tab)}
                     className={`py-3 sm:py-4 px-1 border-b-2 font-medium text-xs sm:text-sm capitalize transition-colors whitespace-nowrap ${
                       activeTab === tab
-                        ? 'border-purple-400 text-purple-400'
+                        ? 'border-blue-400 text-blue-400'
                         : 'border-transparent text-gray-400 hover:text-white hover:border-white/20'
                     }`}
                   >
@@ -330,7 +330,7 @@ export default function Dashboard() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
               {stats.map((stat, index) => (
                 <div key={index} className="group relative">
-                  <div className="absolute inset-0 bg-gradient-to-r from-purple-600/20 to-pink-600/20 rounded-xl blur opacity-75 group-hover:opacity-100 transition-opacity"></div>
+                  <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-cyan-600/20 rounded-xl blur opacity-75 group-hover:opacity-100 transition-opacity"></div>
                   <div className="relative backdrop-blur-xl bg-white/10 border border-white/20 rounded-xl p-4 sm:p-6 hover:bg-white/15 transition-all duration-300">
                     <div className="flex items-center justify-between mb-3 sm:mb-4">
                       <div className="flex-1 min-w-0">
@@ -353,12 +353,12 @@ export default function Dashboard() {
               {/* Chart Area */}
               <div className="lg:col-span-2">
                 <div className="group relative">
-                  <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-purple-600/20 rounded-xl blur opacity-75 group-hover:opacity-100 transition-opacity"></div>
+                  <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-cyan-600/20 rounded-xl blur opacity-75 group-hover:opacity-100 transition-opacity"></div>
                   <div className="relative backdrop-blur-xl bg-white/10 border border-white/20 rounded-xl p-4 sm:p-6">
                     <h3 className="text-base sm:text-lg font-semibold text-white mb-3 sm:mb-4">Analytics Overview</h3>
-                    <div className="h-48 sm:h-64 bg-gradient-to-br from-purple-500/20 to-pink-500/20 rounded-lg flex items-center justify-center">
+                    <div className="h-48 sm:h-64 bg-gradient-to-br from-blue-500/20 to-cyan-500/20 rounded-lg flex items-center justify-center">
                       <div className="text-center">
-                        <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-purple-400 to-pink-400 rounded-full mx-auto mb-3 sm:mb-4 flex items-center justify-center">
+                        <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-blue-400 to-cyan-400 rounded-full mx-auto mb-3 sm:mb-4 flex items-center justify-center">
                           <svg className="w-6 h-6 sm:w-8 sm:h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                           </svg>
@@ -378,7 +378,7 @@ export default function Dashboard() {
                   <div className="space-y-3 sm:space-y-4">
                     {recentActivities.map((activity, index) => (
                       <div key={index} className="flex items-start space-x-3 p-2 sm:p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors">
-                        <div className="w-2 h-2 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full mt-2 flex-shrink-0"></div>
+                        <div className="w-2 h-2 bg-gradient-to-r from-blue-400 to-cyan-400 rounded-full mt-2 flex-shrink-0"></div>
                         <div className="flex-1 min-w-0">
                           <p className="text-xs sm:text-sm text-white font-medium truncate">{activity.action}</p>
                           <p className="text-xs text-gray-400 truncate">by {activity.user}</p>
@@ -394,15 +394,15 @@ export default function Dashboard() {
             {/* Quick Actions */}
             <div className="mt-6 sm:mt-8">
               <div className="group relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-violet-600/20 to-purple-600/20 rounded-xl blur opacity-75 group-hover:opacity-100 transition-opacity"></div>
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-cyan-600/20 rounded-xl blur opacity-75 group-hover:opacity-100 transition-opacity"></div>
                 <div className="relative backdrop-blur-xl bg-white/10 border border-white/20 rounded-xl p-4 sm:p-6">
                   <h3 className="text-base sm:text-lg font-semibold text-white mb-3 sm:mb-4">Quick Actions</h3>
                   <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                     {[
-                      { title: 'Add User', icon: '👤', color: 'from-blue-500 to-purple-500' },
+                      { title: 'Add User', icon: '👤', color: 'from-blue-500 to-cyan-500' },
                       { title: 'Create Post', icon: '📝', color: 'from-emerald-500 to-cyan-500' },
                       { title: 'Review Recruits', icon: '🎯', color: 'from-orange-500 to-red-500' },
-                      { title: 'Generate Report', icon: '📊', color: 'from-pink-500 to-rose-500' },
+                      { title: 'Generate Report', icon: '📊', color: 'from-cyan-500 to-rose-500' },
                     ].map((action, index) => (
                       <button
                         key={index}

@@ -233,9 +233,9 @@ export default function NapReport() {
   const totals = calculateTotals();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 relative overflow-hidden">
       {/* Background gradient overlays */}
-      <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-pink-500/10"></div>
+      <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 via-blue-500/10 to-cyan-500/10"></div>
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(120,119,198,0.1),transparent_50%)]"></div>
       
       <div className="relative z-[5] max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
@@ -248,7 +248,7 @@ export default function NapReport() {
         {/* Alert Messages */}
         {error && (
           <div className="mb-6 group relative">
-            <div className="absolute inset-0 bg-gradient-to-r from-red-600/20 to-pink-600/20 rounded-xl blur opacity-75"></div>
+            <div className="absolute inset-0 bg-gradient-to-r from-red-600/20 to-rose-600/20 rounded-xl blur opacity-75"></div>
             <div className="relative backdrop-blur-xl bg-red-500/10 border border-red-500/20 rounded-xl p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
@@ -300,7 +300,7 @@ export default function NapReport() {
 
         {/* Upload Section */}
         <div className="mb-6 sm:mb-8 group relative">
-          <div className="absolute inset-0 bg-gradient-to-r from-purple-600/20 to-pink-600/20 rounded-xl blur opacity-75 group-hover:opacity-100 transition-opacity"></div>
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-cyan-600/20 rounded-xl blur opacity-75 group-hover:opacity-100 transition-opacity"></div>
           <div className="relative backdrop-blur-xl bg-white/10 border border-white/20 rounded-xl p-6">
             <h2 className="text-xl font-semibold text-white mb-4">Upload NAP Report</h2>
             
@@ -314,7 +314,7 @@ export default function NapReport() {
                     type="file"
                     accept=".pdf"
                     onChange={(e) => setFile(e.target.files ? e.target.files[0] : null)}
-                    className="block w-full text-sm text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-purple-600 file:text-white hover:file:bg-purple-700 file:cursor-pointer cursor-pointer bg-white/5 border border-white/20 rounded-lg"
+                    className="block w-full text-sm text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700 file:cursor-pointer cursor-pointer bg-white/5 border border-white/20 rounded-lg"
                   />
                 </div>
                 {file && (
@@ -327,7 +327,7 @@ export default function NapReport() {
               <button
                 onClick={handleUpload}
                 disabled={loading || !file}
-                className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold rounded-lg hover:from-purple-700 hover:to-pink-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 flex items-center space-x-2"
+                className="px-6 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-semibold rounded-lg hover:from-blue-700 hover:to-cyan-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 flex items-center space-x-2"
               >
                 {loading ? (
                   <>
@@ -351,7 +351,7 @@ export default function NapReport() {
 
         {/* Reports Table */}
         <div className="group relative">
-          <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-purple-600/20 rounded-xl blur opacity-75 group-hover:opacity-100 transition-opacity"></div>
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-cyan-600/20 rounded-xl blur opacity-75 group-hover:opacity-100 transition-opacity"></div>
           <div className="relative backdrop-blur-xl bg-white/10 border border-white/20 rounded-xl p-6">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 space-y-4 sm:space-y-0">
               <h2 className="text-xl font-semibold text-white">
@@ -367,7 +367,7 @@ export default function NapReport() {
                   <select
                     value={selectedMonth}
                     onChange={(e) => handleMonthFilter(e.target.value)}
-                    className="bg-white/5 border border-white/20 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    className="bg-white/5 border border-white/20 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="">All Months</option>
                     {availableMonths.map((month) => (
@@ -398,7 +398,7 @@ export default function NapReport() {
                     <button
                       onClick={() => exportExcel('all')}
                       disabled={allReports.length === 0}
-                      className="px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-lg hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 flex items-center space-x-2 text-sm"
+                    className="px-4 py-2 bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-semibold rounded-lg hover:from-blue-700 hover:to-cyan-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 flex items-center space-x-2 text-sm"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4" />
@@ -424,7 +424,7 @@ export default function NapReport() {
             {loading && !file ? (
               <div className="flex items-center justify-center py-12">
                 <div className="flex items-center space-x-3">
-                  <svg className="animate-spin w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="animate-spin w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                   </svg>
                   <span className="text-gray-300">Loading reports...</span>
@@ -457,7 +457,7 @@ export default function NapReport() {
                       <tr>
                         <td colSpan={5} className="px-4 py-12 text-center">
                           <div className="text-center">
-                            <div className="w-16 h-16 bg-gradient-to-br from-purple-400 to-pink-400 rounded-full mx-auto mb-4 flex items-center justify-center">
+                            <div className="w-16 h-16 bg-gradient-to-br from-blue-400 to-cyan-400 rounded-full mx-auto mb-4 flex items-center justify-center">
                               <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                               </svg>

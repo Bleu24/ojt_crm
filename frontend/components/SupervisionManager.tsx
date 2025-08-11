@@ -234,8 +234,8 @@ export default function SupervisionManager() {
               <p className="text-sm text-gray-400">Avg Hours/Day</p>
               <p className="text-2xl font-bold text-white">{stats.avgHoursWorked.toFixed(1)}</p>
             </div>
-            <div className="w-12 h-12 bg-purple-500/20 rounded-lg flex items-center justify-center">
-              <svg className="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center">
+              <svg className="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
@@ -271,7 +271,7 @@ export default function SupervisionManager() {
               placeholder="Search users..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
 
@@ -282,7 +282,7 @@ export default function SupervisionManager() {
               filteredAvailableUsers.map((user) => (
                 <div key={user._id} className="flex items-center justify-between p-3 bg-white/5 rounded-lg hover:bg-white/10 transition-colors">
                   <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center">
+                    <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-cyan-500 rounded-full flex items-center justify-center">
                       <span className="text-white font-semibold text-sm">
                         {user.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
                       </span>
@@ -290,7 +290,7 @@ export default function SupervisionManager() {
                     <div>
                       <p className="text-white font-medium">{user.name}</p>
                       <p className="text-gray-400 text-sm">{user.email}</p>
-                      <p className="text-xs text-purple-400 capitalize">{user.role}</p>
+                      <p className="text-xs text-blue-400 capitalize">{user.role}</p>
                     </div>
                   </div>
                   <button
@@ -329,7 +329,7 @@ export default function SupervisionManager() {
                       <p className="text-white font-medium">{user.name}</p>
                       <p className="text-gray-400 text-sm">{user.email}</p>
                       <div className="flex items-center space-x-2">
-                        <p className="text-xs text-purple-400 capitalize">{user.role}</p>
+                        <p className="text-xs text-blue-400 capitalize">{user.role}</p>
                         <span className="text-xs text-gray-500">•</span>
                         <p className="text-xs text-gray-500">Added {formatDate(user.createdAt)}</p>
                       </div>
@@ -338,7 +338,7 @@ export default function SupervisionManager() {
                   <button
                     onClick={() => removeFromSupervision(user._id)}
                     disabled={loading}
-                    className="px-4 py-2 bg-gradient-to-r from-red-500 to-pink-600 hover:from-red-600 hover:to-pink-700 text-white text-sm font-medium rounded-lg transition-all duration-300 disabled:opacity-50"
+                    className="px-4 py-2 bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 text-white text-sm font-medium rounded-lg transition-all duration-300 disabled:opacity-50"
                   >
                     Remove
                   </button>

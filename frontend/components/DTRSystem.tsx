@@ -395,14 +395,14 @@ export default function DTRSystem() {
                 value={accomplishmentNote}
                 onChange={(e) => setAccomplishmentNote(e.target.value)}
                 placeholder="Describe what you accomplished today..."
-                className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 rows={3}
               />
             </div>
             <button
               onClick={handleTimeOut}
               disabled={loading || !accomplishmentNote.trim()}
-              className="w-full bg-gradient-to-r from-red-500 to-pink-600 hover:from-red-600 hover:to-pink-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300 disabled:opacity-50"
+              className="w-full bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300 disabled:opacity-50"
             >
               {loading ? 'Clocking Out...' : 'Clock Out'}
             </button>
@@ -425,7 +425,7 @@ export default function DTRSystem() {
         
         {/* Time Button */}
         <div className="mt-6 text-center">
-          <button className="bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white font-semibold py-3 px-8 rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl">
+          <button className="bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white font-semibold py-3 px-8 rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl">
             <div className="text-lg font-mono">
               {currentTime.toLocaleTimeString('en-US', {
                 hour: '2-digit',
@@ -465,7 +465,7 @@ export default function DTRSystem() {
                   </div>
                   <div className="text-right">
                     {entry.hoursWorked > 0 && (
-                      <div className="text-purple-400 font-semibold">
+                      <div className="text-blue-400 font-semibold">
                         {entry.hoursWorked.toFixed(1)}h
                       </div>
                     )}
