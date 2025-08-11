@@ -204,8 +204,32 @@ export default function HoursManager() {
                   />
                   <defs>
                     <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                      <stop offset="0%" className="stop-color-current" style={{ stopColor: getProgressColor().includes('green') ? '#10b981' : getProgressColor().includes('blue') ? '#3b82f6' : getProgressColor().includes('yellow') ? '#f59e0b' : '#ef4444' }} />
-                      <stop offset="100%" className="stop-color-current" style={{ stopColor: getProgressColor().includes('green') ? '#059669' : getProgressColor().includes('blue') ? '#8b5cf6' : getProgressColor().includes('yellow') ? '#ea580c' : '#ec4899' }} />
+                      <stop
+                        offset="0%"
+                        className="stop-color-current"
+                        style={{
+                          stopColor: getProgressColor().includes('green')
+                            ? '#10b981'
+                            : getProgressColor().includes('blue')
+                              ? 'rgb(var(--color-secondary))'
+                              : getProgressColor().includes('yellow')
+                                ? '#f59e0b'
+                                : '#ef4444',
+                        }}
+                      />
+                      <stop
+                        offset="100%"
+                        className="stop-color-current"
+                        style={{
+                          stopColor: getProgressColor().includes('green')
+                            ? '#059669'
+                            : getProgressColor().includes('blue')
+                              ? 'rgb(var(--color-accent))'
+                              : getProgressColor().includes('yellow')
+                                ? '#ea580c'
+                                : '#ec4899',
+                        }}
+                      />
                     </linearGradient>
                   </defs>
                 </svg>
