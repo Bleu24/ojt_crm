@@ -206,7 +206,7 @@ export default function TeamStatus() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="mac-card space-y-6">
       {/* Team Status Overview */}
       <div className="group relative">
         <div className="absolute inset-0 bg-gradient-to-r from-emerald-600/20 to-cyan-600/20 rounded-xl blur opacity-75 group-hover:opacity-100 transition-opacity"></div>

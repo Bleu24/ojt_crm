@@ -967,7 +967,7 @@ export default function RecruitsManagement() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="mac-card space-y-6">
       <ZoomAuthPrompt
         open={showZoomPrompt}
         onClose={() => setShowZoomPrompt(false)}
