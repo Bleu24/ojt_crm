@@ -16,7 +16,7 @@ export default function ZoomAuthPrompt({ open, onClose, onConnect, connecting }:
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
 
-      <div className="relative w-full max-w-md rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl shadow-2xl p-6 text-white">
+      <div className="mac-card relative w-full max-w-md rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl shadow-2xl p-6 text-white">
         <div className="flex items-start gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-500/20 border border-blue-400/30">🔗</div>
           <div className="flex-1">

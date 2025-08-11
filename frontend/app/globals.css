@@ -129,3 +129,55 @@ body {
 .glow-blue {
   box-shadow: 0 0 20px rgba(37, 99, 235, 0.4);
 }
+
+/* macOS-inspired layout */
+.mac-window {
+  max-width: 1200px;
+  margin: 2rem auto;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(20px);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.mac-header {
+  display: flex;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.mac-traffic-light {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.mac-traffic-light.red {
+  background: #ff5f57;
+}
+
+.mac-traffic-light.yellow {
+  background: #ffbd2e;
+}
+
+.mac-traffic-light.green {
+  background: #27c93f;
+}
+
+.mac-traffic-light + .mac-traffic-light {
+  margin-left: 0.5rem;
+}
+
+.mac-content {
+  padding: 1rem;
+}
+
+.mac-card {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(15px);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 1.5rem;
+}

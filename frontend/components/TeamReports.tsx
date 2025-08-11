@@ -107,7 +107,7 @@ export default function TeamReports() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="mac-card space-y-6">
       {/* Error Message */}
       {error && (
         <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
