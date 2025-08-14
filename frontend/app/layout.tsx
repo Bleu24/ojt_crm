@@ -13,11 +13,20 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "TeamBabe Team Management System",
-  description: "Comprehensive team management and recruitment system for TeamBabe",
-  keywords: "team management, recruitment, CRM, TeamBabe, interview scheduling",
-  authors: [{ name: "TeamBabe" }],
-  viewport: "width=device-width, initial-scale=1",
+  title: 'TeamBabe Team Management System',
+  description: 'Comprehensive team management and recruitment system for TeamBabe',
+  keywords: 'team management, recruitment, CRM, TeamBabe, interview scheduling',
+  authors: [{ name: 'TeamBabe' }],
+  viewport: 'width=device-width, initial-scale=1',
+  manifest: '/manifest.json',
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#0055aa' },
+    { media: '(prefers-color-scheme: dark)', color: '#0055aa' }
+  ],
+  icons: [
+    { rel: 'icon', url: '/icon-192x192.png' },
+    { rel: 'apple-touch-icon', url: '/icon-192x192.png' }
+  ],
 };
 
 export default function RootLayout({
