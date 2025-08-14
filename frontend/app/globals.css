@@ -1,43 +1,32 @@
+@import "tailwindcss";
+
 /*
-  iOS PWA blending utilities
-  - .ios-fullbleed: Prevents white bar at bottom and stretches content under notch
-  - .safe-top, .safe-right, .safe-bottom, .safe-left: Adds safe area padding for each edge
-  - Use with <body className="ios-fullbleed"> and <header className="safe-top"> for best results
+  iOS PWA layout best practices
+  - Avoid double-padding: only add safe-area padding where content sits (e.g. header / footer)
+  - .ios-fullbleed ensures the body fills the screen in standalone mode without artificial extra top padding
+  - .safe-top / .safe-bottom supply inset spacing so content doesn't clash with notch or home indicator
 */
 
 html, body {
-  background: #0055aa; /* Brand color for full-bleed background */
-  color: #fff; /* Ensures text is readable on brand background */
+  height: 100%;
+  min-height: 100%;
+  background: var(--background);
+  color: var(--foreground);
 }
 
+/* Body stretch for iOS standalone (prevents bottom gap & allows notch overlay) */
 .ios-fullbleed {
-  min-height: calc(100% + env(safe-area-inset-top)); /* Prevents white bar at bottom on iOS */
-  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  min-height: 100vh;
+  /* iOS Safari proprietary fill to handle dynamic viewport when address bar collapses */
+  min-height: -webkit-fill-available;
 }
 
-.safe-top {
-  padding-top: constant(safe-area-inset-top);
-  padding-top: env(safe-area-inset-top);
-}
-.safe-right {
-  padding-right: constant(safe-area-inset-right);
-  padding-right: env(safe-area-inset-right);
-}
-.safe-bottom {
-  padding-bottom: constant(safe-area-inset-bottom);
-  padding-bottom: env(safe-area-inset-bottom);
-}
-.safe-left {
-  padding-left: constant(safe-area-inset-left);
-  padding-left: env(safe-area-inset-left);
-}
-html {
-  min-height: calc(100% + env(safe-area-inset-top));
-  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
-  color: #fff;
-}
-
-@import "tailwindcss";
+/* Safe area utilities (only add what you need) */
+.safe-top { padding-top: env(safe-area-inset-top); }
+.safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+/* Optional per-edge helpers */
+.safe-right { padding-right: env(safe-area-inset-right); }
+.safe-left { padding-left: env(safe-area-inset-left); }
 
 :root {
   --background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
