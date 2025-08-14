@@ -17,7 +17,7 @@ export const metadata: Metadata = {
   description: 'Comprehensive team management and recruitment system for TeamBabe',
   keywords: 'team management, recruitment, CRM, TeamBabe, interview scheduling',
   authors: [{ name: 'TeamBabe' }],
-  viewport: 'width=device-width, initial-scale=1',
+  viewport: 'width=device-width, initial-scale=1, viewport-fit=cover',
   manifest: '/manifest.json',
   themeColor: [
     { media: '(prefers-color-scheme: light)', color: '#0055aa' },
@@ -27,6 +27,11 @@ export const metadata: Metadata = {
     { rel: 'icon', url: '/icon-192x192.png' },
     { rel: 'apple-touch-icon', url: '/icon-192x192.png' }
   ],
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "TeamBabe CRM"
+  },
 };
 
 export default function RootLayout({
@@ -39,9 +44,6 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <header className="safe-top">
-          {/* Place your navigation or top bar here if needed */}
-        </header>
         {children}
       </body>
     </html>
