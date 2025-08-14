@@ -39,6 +39,9 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        <header className="safe-top">
+          {/* Place your navigation or top bar here if needed */}
+        </header>
         {children}
       </body>
     </html>
