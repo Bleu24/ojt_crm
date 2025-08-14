@@ -43,10 +43,10 @@ export default function RootLayout({
     <html lang="en">
       {/*
         For iOS PWA blending:
-        - Apply .ios-fullbleed to <body> to prevent white bar at bottom and stretch under notch.
+        - Apply .bleed to <body> to prevent white bar at bottom and stretch under notch.
         - Apply .safe-top to <header> to ensure content is not hidden under the notch.
       */}
-      <body className={`ios-fullbleed ${geistSans.variable} ${geistMono.variable} antialiased`}>
+      <body className={`bleed ${geistSans.variable} ${geistMono.variable} antialiased`}>
         <header className="safe-top">
           {/* Top navigation or branding goes here */}
         </header>

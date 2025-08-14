@@ -3,7 +3,7 @@
 /*
   iOS PWA layout best practices
   - Avoid double-padding: only add safe-area padding where content sits (e.g. header / footer)
-  - .ios-fullbleed ensures the body fills the screen in standalone mode without artificial extra top padding
+  - .bleed ensures the body fills the screen in standalone mode without artificial extra top padding
   - .safe-top / .safe-bottom supply inset spacing so content doesn't clash with notch or home indicator
 */
 
@@ -15,7 +15,7 @@ html, body {
 }
 
 /* Body stretch for iOS standalone (prevents bottom gap & allows notch overlay) */
-.ios-fullbleed {
+.bleed {
   min-height: 100vh;
   /* iOS Safari proprietary fill to handle dynamic viewport when address bar collapses */
   min-height: -webkit-fill-available;
